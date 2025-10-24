@@ -5,7 +5,10 @@ import { useRouter } from "next/navigation";
 import { trpc } from "@/src/utils/trpc";
 import Navigation from "@/components/navigation";
 import Link from "next/link";
-import { ArrowLeft, Eye, Save, Settings, Image as ImageIcon } from "lucide-react";
+import Image from "next/image";
+import { PostPreviewModal } from "@/components/post-preview-modal";
+import { calculateReadingTime, formatReadingTime, getWordCount } from "@/lib/post-utils";
+import { ArrowLeft, Eye, Save, Settings, Image as ImageIcon, Clock, FileText } from "lucide-react";
 
 export default function CreatePostPage() {
   const router = useRouter();
@@ -16,6 +19,7 @@ export default function CreatePostPage() {
   const [published, setPublished] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const [showSettings, setShowSettings] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   const { data: categories } = trpc.categories.getAll.useQuery();
   const createPost = trpc.posts.create.useMutation({
@@ -73,7 +77,8 @@ export default function CreatePostPage() {
               
               <button
                 type="button"
-                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
+                onClick={() => setShowPreview(true)}
+                className="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-2"
               >
                 <Eye className="w-4 h-4" />
                 Preview
@@ -92,7 +97,7 @@ export default function CreatePostPage() {
         </div>
       </div>
 
-      <main className="min-h-screen bg-gray-50">
+      <main className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-6">
             
@@ -115,14 +120,17 @@ export default function CreatePostPage() {
                 {/* Featured Image */}
                 {image && (
                   <div className="relative">
-                    <img 
-                      src={image} 
-                      alt="Featured" 
-                      className="w-full h-64 object-cover"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
+                    <div className="relative w-full h-64">
+                      <Image 
+                        src={image} 
+                        alt="Featured" 
+                        fill
+                        className="object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    </div>
                   </div>
                 )}
 
@@ -196,6 +204,40 @@ export default function CreatePostPage() {
                 </div>
               </div>
 
+              {/* Post Statistics */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Post Statistics
+                </h3>
+                
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Word Count:</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      {content ? getWordCount(content) : 0}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      Reading Time:
+                    </span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      {content ? formatReadingTime(calculateReadingTime(content)) : "0 min read"}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Characters:</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      {content ? content.length : 0}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
               {/* Categories */}
               {categories && categories.length > 0 && (
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
@@ -246,6 +288,17 @@ export default function CreatePostPage() {
           </div>
         </div>
       </main>
+
+      {/* Preview Modal */}
+      <PostPreviewModal
+        isOpen={showPreview}
+        onClose={() => setShowPreview(false)}
+        title={title}
+        content={content}
+        author={author}
+        image={image}
+        categories={categories?.filter(cat => selectedCategories.includes(cat.id)) || []}
+      />
     </>
   );
 }

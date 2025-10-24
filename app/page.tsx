@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react"
-import { ChevronRight, ChevronLeft } from "lucide-react"
+import { ChevronRight, ChevronLeft, Search } from "lucide-react"
 import BlogCard from "@/components/blog-card"
 import FeaturedBlogCard from "@/components/featured-blog-card"
 import SmallBlogCard from "@/components/small-blog-card"
@@ -11,6 +11,8 @@ import { trpc } from "@/src/utils/trpc"
 export default function BlogPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [isFiltering, setIsFiltering] = useState(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState(1);
   
   // Fetch all posts once and filter client-side for better performance
   const { data: allPosts, isLoading } = trpc.posts.getAll.useQuery({
@@ -18,18 +20,32 @@ export default function BlogPage() {
   });
   const { data: categories } = trpc.categories.getAll.useQuery();
 
-  // Filter posts client-side based on selected category
+  // Filter posts client-side based on selected category and search query
   const filteredPosts = useMemo(() => {
     if (!allPosts) return [];
     
-    if (selectedCategory === "all") {
-      return allPosts;
+    let filtered = allPosts;
+    
+    // Filter by category
+    if (selectedCategory !== "all") {
+      filtered = filtered.filter(post => 
+        post.categories?.some(cat => cat.slug === selectedCategory)
+      );
     }
     
-    return allPosts.filter(post => 
-      post.categories?.some(cat => cat.slug === selectedCategory)
-    );
-  }, [allPosts, selectedCategory]);
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(post => 
+        post.title.toLowerCase().includes(query) ||
+        post.content.toLowerCase().includes(query) ||
+        post.author?.toLowerCase().includes(query) ||
+        post.categories?.some(cat => cat.name.toLowerCase().includes(query))
+      );
+    }
+    
+    return filtered;
+  }, [allPosts, selectedCategory, searchQuery]);
 
   const handleCategoryChange = (categorySlug: string) => {
     setIsFiltering(true);
@@ -42,7 +58,7 @@ export default function BlogPage() {
     return (
       <>
         <Navigation />
-        <main className="min-h-screen bg-background">
+        <main className="min-h-screen bg-white dark:bg-gray-900">
           <div className="max-w-7xl mx-auto px-4 py-12 md:py-16">
             <div className="animate-pulse">
               <div className="h-8 bg-muted rounded w-48 mb-8"></div>
@@ -76,6 +92,7 @@ export default function BlogPage() {
     image: post.image || "/placeholder.svg",
     tags: [], // Legacy field, now using categories
     slug: post.slug,
+    content: post.content, // Add full content for reading time calculation
     categories: post.categories || [],
   })) || []
 
@@ -88,9 +105,24 @@ export default function BlogPage() {
       <Navigation />
       <main className="min-h-screen bg-background">
         <div className="max-w-7xl mx-auto px-4 py-12 md:py-16">
-          {/* Category Filter Dropdown */}
-          {categories && categories.length > 0 && (
-            <div className="mb-8">
+          {/* Search and Filter Section */}
+          <div className="mb-8 space-y-4">
+            {/* Search Bar */}
+            <div className="relative max-w-md">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search posts, authors, or categories..."
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+              />
+            </div>
+
+            {/* Category Filter */}
+            {categories && categories.length > 0 && (
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 <label htmlFor="category-select" className="text-lg font-semibold text-gray-900">
                   Filter by Category:
@@ -115,8 +147,17 @@ export default function BlogPage() {
                   })}
                 </select>
               </div>
-            </div>
-          )}
+            )}
+
+            {/* Results Count */}
+            {(searchQuery.trim() || selectedCategory !== "all") && (
+              <div className="text-sm text-gray-600">
+                {filteredPosts.length} {filteredPosts.length === 1 ? 'post' : 'posts'} found
+                {searchQuery.trim() && ` for "${searchQuery}"`}
+                {selectedCategory !== "all" && ` in ${categories?.find(c => c.slug === selectedCategory)?.name}`}
+              </div>
+            )}
+          </div>
 
           {/* Recent blog posts section */}
           <section className="mb-16">
