@@ -6,6 +6,7 @@ import BlogCard from "@/components/blog-card"
 import FeaturedBlogCard from "@/components/featured-blog-card"
 import SmallBlogCard from "@/components/small-blog-card"
 import Navigation from "@/components/navigation"
+import { PostCardSkeleton, FeaturedPostSkeleton, SmallPostSkeleton } from "@/components/skeletons"
 import { trpc } from "@/src/utils/trpc"
 
 export default function BlogPage() {
@@ -58,20 +59,46 @@ export default function BlogPage() {
     return (
       <>
         <Navigation />
-        <main className="min-h-screen bg-white dark:bg-gray-900">
+        <main className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-blue-950">
           <div className="max-w-7xl mx-auto px-4 py-12 md:py-16">
-            <div className="animate-pulse">
-              <div className="h-8 bg-muted rounded w-48 mb-8"></div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="space-y-4">
-                    <div className="h-48 bg-muted rounded-lg"></div>
-                    <div className="h-4 bg-muted rounded w-3/4"></div>
-                    <div className="h-4 bg-muted rounded w-1/2"></div>
-                  </div>
-                ))}
+            {/* Search and Filter Skeleton */}
+            <div className="mb-8 space-y-4">
+              <div className="relative max-w-md">
+                <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-32 animate-pulse"></div>
+                <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-48 animate-pulse"></div>
               </div>
             </div>
+
+            {/* Recent blog posts skeleton */}
+            <section className="mb-16">
+              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-48 mb-8 animate-pulse"></div>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Featured large post skeleton */}
+                <div className="lg:col-span-1">
+                  <FeaturedPostSkeleton />
+                </div>
+
+                {/* Small featured posts skeleton */}
+                <div className="lg:col-span-2 flex flex-col gap-6">
+                  <SmallPostSkeleton />
+                  <SmallPostSkeleton />
+                </div>
+              </div>
+            </section>
+
+            {/* All blog posts skeleton */}
+            <section>
+              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-40 mb-8 animate-pulse"></div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <PostCardSkeleton key={i} />
+                ))}
+              </div>
+            </section>
           </div>
         </main>
       </>
@@ -109,7 +136,7 @@ export default function BlogPage() {
           <div className="mb-8 space-y-4">
             {/* Search Bar */}
             <div className="relative max-w-md">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <Search className="h-5 w-5 text-gray-400" />
               </div>
               <input
@@ -117,7 +144,7 @@ export default function BlogPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search posts, authors, or categories..."
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                className="block w-full pl-12 pr-4 py-3 glass dark:glass-dark rounded-xl focus-ring text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200"
               />
             </div>
 

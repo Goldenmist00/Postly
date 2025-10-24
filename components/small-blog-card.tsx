@@ -1,7 +1,8 @@
-import { ArrowRight, Clock } from "lucide-react"
+import { ArrowRight, Clock, ImageIcon } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { calculateReadingTime, formatReadingTime } from "@/lib/post-utils"
+import { isValidImageUrl } from "@/lib/image-utils"
 
 interface Post {
   id: number
@@ -25,16 +26,23 @@ export default function SmallBlogCard({ post }: { post: Post }) {
   
   return (
     <Link href={href} className="group cursor-pointer flex gap-4 p-4 rounded-lg hover:bg-muted transition-colors">
-      <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
-        <Image
-          src={post.image || "/placeholder.svg"}
-          alt={post.title}
-          fill
-          className="object-cover group-hover:scale-105 transition-transform duration-300"
-          onError={(e) => {
-            e.currentTarget.src = "/placeholder.svg";
-          }}
-        />
+      <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800">
+        {isValidImageUrl(post.image) ? (
+          <Image
+            src={post.image}
+            alt={post.title}
+            fill
+            sizes="(max-width: 768px) 100px, 128px"
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <ImageIcon className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+          </div>
+        )}
       </div>
 
       <div className="flex-1 flex flex-col justify-between">
@@ -63,10 +71,9 @@ export default function SmallBlogCard({ post }: { post: Post }) {
         <div className="flex flex-wrap gap-2 mt-3">
           {post.categories && post.categories.length > 0 ? (
             post.categories.map((category, index) => (
-              <Link
+              <span
                 key={category.id}
-                href={`/categories/${category.slug}`}
-                className={`text-xs px-2 py-1 rounded hover:opacity-80 transition-opacity ${
+                className={`text-xs px-2 py-1 rounded ${
                   index % 3 === 0
                     ? "bg-purple-100 text-purple-700"
                     : index % 3 === 1
@@ -75,7 +82,7 @@ export default function SmallBlogCard({ post }: { post: Post }) {
                 }`}
               >
                 {category.name}
-              </Link>
+              </span>
             ))
           ) : (
             <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600">

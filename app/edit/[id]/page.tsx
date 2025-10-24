@@ -5,8 +5,10 @@ import { useRouter, useParams } from "next/navigation";
 import { trpc } from "@/src/utils/trpc";
 import Link from "next/link";
 import Image from "next/image";
+import { RichTextEditor } from "@/components/rich-text-editor";
 import { calculateReadingTime, formatReadingTime, getWordCount } from "@/lib/post-utils";
-import { ArrowLeft, Eye, Save, Settings, Image as ImageIcon, Clock, FileText } from "lucide-react";
+import { isValidImageUrl } from "@/lib/image-utils";
+import { ArrowLeft, Eye, Save, Settings, Image as ImageIcon, Clock, FileText, Type } from "lucide-react";
 
 export default function EditPostPage() {
   const router = useRouter();
@@ -20,6 +22,7 @@ export default function EditPostPage() {
   const [published, setPublished] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const [showSettings, setShowSettings] = useState(false);
+  const [editorMode, setEditorMode] = useState<'simple' | 'rich'>('rich');
 
   const { data: post, isLoading } = trpc.posts.getById.useQuery({ id: postId });
   const { data: categories } = trpc.categories.getAll.useQuery();
@@ -216,7 +219,7 @@ export default function EditPostPage() {
                 </div>
 
                 {/* Featured Image */}
-                {image && (
+                {isValidImageUrl(image) && (
                   <div className="relative">
                     <div className="relative w-full h-64">
                       <Image 
@@ -232,15 +235,57 @@ export default function EditPostPage() {
                   </div>
                 )}
 
+                {/* Editor Mode Toggle */}
+                <div className="px-6 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-1 bg-gray-200 dark:bg-gray-700 rounded-lg p-1">
+                      <button
+                        onClick={() => setEditorMode('rich')}
+                        className={`flex items-center gap-2 px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                          editorMode === 'rich'
+                            ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
+                        }`}
+                      >
+                        <Type className="w-4 h-4" />
+                        Rich Editor
+                      </button>
+                      <button
+                        onClick={() => setEditorMode('simple')}
+                        className={`flex items-center gap-2 px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                          editorMode === 'simple'
+                            ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
+                        }`}
+                      >
+                        <FileText className="w-4 h-4" />
+                        Simple
+                      </button>
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {editorMode === 'rich' ? 'Rich text with formatting tools' : 'Plain text editor'}
+                    </div>
+                  </div>
+                </div>
+
                 {/* Content Editor */}
                 <div className="p-6">
-                  <textarea
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    placeholder="Tell your story..."
-                    className="w-full min-h-[500px] text-lg text-gray-900 placeholder-gray-400 border-none outline-none resize-none leading-relaxed"
-                    style={{ fontFamily: 'Georgia, serif' }}
-                  />
+                  {editorMode === 'rich' ? (
+                    <RichTextEditor
+                      value={content}
+                      onChange={setContent}
+                      placeholder="Tell your story..."
+                      className="min-h-[500px] text-lg leading-relaxed p-4"
+                    />
+                  ) : (
+                    <textarea
+                      value={content}
+                      onChange={(e) => setContent(e.target.value)}
+                      placeholder="Tell your story..."
+                      className="w-full min-h-[500px] text-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 border-none outline-none resize-none leading-relaxed bg-transparent"
+                      style={{ fontFamily: 'Georgia, serif' }}
+                    />
+                  )}
                 </div>
               </div>
             </div>
@@ -322,17 +367,17 @@ export default function EditPostPage() {
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                 <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
                   <ImageIcon className="w-4 h-4" />
-                  Featured Image
+                  Featured Image <span className="text-sm font-normal text-gray-500">(optional)</span>
                 </h3>
                 <input
-                  type="url"
+                  type="text"
                   value={image}
                   onChange={(e) => setImage(e.target.value)}
-                  placeholder="Image URL"
+                  placeholder="Image URL (optional)"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 />
                 <div className="text-xs text-gray-500 mt-2">
-                  Add a cover image to make your post stand out
+                  Add a cover image to make your post stand out (optional)
                 </div>
               </div>
 

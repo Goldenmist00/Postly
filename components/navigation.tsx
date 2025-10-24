@@ -4,11 +4,11 @@ import { ThemeToggle } from "./theme-toggle";
 
 export default function Navigation() {
   return (
-    <nav className="border-b border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-gray-900/60">
+    <nav className="border-b border-gray-200/50 dark:border-gray-700/50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-gray-900/60 shadow-lg">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-8">
-            <Link href="/" className="text-xl font-bold text-gray-900 dark:text-gray-100">
+            <Link href="/" className="text-2xl font-bold gradient-text hover:scale-105 transition-transform duration-200">
               Postly
             </Link>
             
@@ -38,7 +38,7 @@ export default function Navigation() {
             <ThemeToggle />
             <Link 
               href="/posts/create"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+              className="btn-gradient flex items-center gap-2 hover-glow"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

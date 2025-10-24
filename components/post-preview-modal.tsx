@@ -3,6 +3,9 @@
 import { X, Calendar, User, Clock } from "lucide-react";
 import Image from "next/image";
 import { calculateReadingTime, formatReadingTime, getWordCount } from "@/lib/post-utils";
+import { isValidImageUrl } from "@/lib/image-utils";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface PostPreviewModalProps {
   isOpen: boolean;
@@ -87,12 +90,13 @@ export function PostPreviewModal({
             </header>
 
             {/* Featured image */}
-            {image && (
+            {isValidImageUrl(image) && (
               <div className="relative h-64 md:h-96 rounded-lg overflow-hidden mb-8 bg-gray-100 dark:bg-gray-800">
                 <Image
                   src={image}
                   alt={title || "Featured image"}
                   fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
                   className="object-cover"
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
@@ -103,8 +107,28 @@ export function PostPreviewModal({
 
             {/* Post content */}
             <article className="prose prose-gray dark:prose-invert max-w-none">
-              <div className="whitespace-pre-wrap text-gray-900 dark:text-gray-100 leading-relaxed">
-                {content || "No content yet..."}
+              <div className="text-gray-900 dark:text-gray-100 leading-relaxed">
+                <ReactMarkdown 
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    // Custom styling for markdown elements
+                    h1: ({children}) => <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">{children}</h1>,
+                    h2: ({children}) => <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3 mt-6">{children}</h2>,
+                    h3: ({children}) => <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2 mt-4">{children}</h3>,
+                    p: ({children}) => <p className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">{children}</p>,
+                    strong: ({children}) => <strong className="font-bold text-gray-900 dark:text-gray-100">{children}</strong>,
+                    em: ({children}) => <em className="italic text-gray-800 dark:text-gray-200">{children}</em>,
+                    ul: ({children}) => <ul className="list-disc list-inside mb-4 text-gray-700 dark:text-gray-300">{children}</ul>,
+                    ol: ({children}) => <ol className="list-decimal list-inside mb-4 text-gray-700 dark:text-gray-300">{children}</ol>,
+                    li: ({children}) => <li className="mb-1">{children}</li>,
+                    blockquote: ({children}) => <blockquote className="border-l-4 border-blue-500 pl-4 italic text-gray-600 dark:text-gray-400 mb-4">{children}</blockquote>,
+                    code: ({children}) => <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-sm font-mono text-gray-800 dark:text-gray-200">{children}</code>,
+                    pre: ({children}) => <pre className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg overflow-x-auto mb-4">{children}</pre>,
+                    a: ({href, children}) => <a href={href} className="text-blue-600 dark:text-blue-400 hover:underline" target="_blank" rel="noopener noreferrer">{children}</a>,
+                  }}
+                >
+                  {content || "No content yet..."}
+                </ReactMarkdown>
               </div>
             </article>
 
