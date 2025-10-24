@@ -4,7 +4,9 @@ import { useParams } from "next/navigation";
 import { trpc } from "@/src/utils/trpc";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Calendar, User } from "lucide-react";
+import Head from "next/head";
+import { ArrowLeft, Calendar, User, Clock } from "lucide-react";
+import { calculateReadingTime, formatReadingTime } from "@/lib/post-utils";
 
 export default function PostPage() {
   const params = useParams();
@@ -53,7 +55,23 @@ export default function PostPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background">
+    <>
+      {post && (
+        <Head>
+          <title>{post.title} | Postly</title>
+          <meta name="description" content={post.content.substring(0, 160)} />
+          <meta name="author" content={post.author || "Anonymous"} />
+          <meta property="og:title" content={post.title} />
+          <meta property="og:description" content={post.content.substring(0, 160)} />
+          <meta property="og:type" content="article" />
+          {post.image && <meta property="og:image" content={post.image} />}
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:title" content={post.title} />
+          <meta name="twitter:description" content={post.content.substring(0, 160)} />
+          {post.image && <meta name="twitter:image" content={post.image} />}
+        </Head>
+      )}
+      <main className="min-h-screen bg-white dark:bg-gray-900">
       <div className="max-w-4xl mx-auto px-4 py-12">
         {/* Back button */}
         <Link 
@@ -68,7 +86,7 @@ export default function PostPage() {
         <header className="mb-8">
           <h1 className="text-4xl font-bold text-foreground mb-4">{post.title}</h1>
           
-          <div className="flex items-center gap-6 text-sm text-muted-foreground">
+          <div className="flex items-center gap-6 text-sm text-gray-600 dark:text-gray-400">
             <div className="flex items-center gap-2">
               <User className="w-4 h-4" />
               <span>{post.author}</span>
@@ -82,6 +100,10 @@ export default function PostPage() {
                   day: 'numeric'
                 })}
               </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              <span>{formatReadingTime(calculateReadingTime(post.content))}</span>
             </div>
           </div>
         </header>
@@ -151,5 +173,6 @@ export default function PostPage() {
         </footer>
       </div>
     </main>
+    </>
   );
 }

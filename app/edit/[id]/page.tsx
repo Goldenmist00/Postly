@@ -4,7 +4,9 @@ import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { trpc } from "@/src/utils/trpc";
 import Link from "next/link";
-import { ArrowLeft, Eye, Save, Settings, Image as ImageIcon } from "lucide-react";
+import Image from "next/image";
+import { calculateReadingTime, formatReadingTime, getWordCount } from "@/lib/post-utils";
+import { ArrowLeft, Eye, Save, Settings, Image as ImageIcon, Clock, FileText } from "lucide-react";
 
 export default function EditPostPage() {
   const router = useRouter();
@@ -131,7 +133,7 @@ export default function EditPostPage() {
           <div className="max-w-4xl mx-auto px-4 py-16">
             <div className="text-center">
               <h1 className="text-2xl font-bold text-gray-900 mb-4">Post Not Found</h1>
-              <p className="text-gray-600 mb-8">The post you're trying to edit doesn't exist.</p>
+              <p className="text-gray-600 mb-8">The post you&apos;re trying to edit doesn&apos;t exist.</p>
               <Link 
                 href="/dashboard"
                 className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
@@ -216,14 +218,17 @@ export default function EditPostPage() {
                 {/* Featured Image */}
                 {image && (
                   <div className="relative">
-                    <img 
-                      src={image} 
-                      alt="Featured" 
-                      className="w-full h-64 object-cover"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
+                    <div className="relative w-full h-64">
+                      <Image 
+                        src={image} 
+                        alt="Featured" 
+                        fill
+                        className="object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    </div>
                   </div>
                 )}
 
@@ -277,6 +282,40 @@ export default function EditPostPage() {
                   placeholder="Author name"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 />
+              </div>
+
+              {/* Post Statistics */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Post Statistics
+                </h3>
+                
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Word Count:</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      {content ? getWordCount(content) : 0}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      Reading Time:
+                    </span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      {content ? formatReadingTime(calculateReadingTime(content)) : "0 min read"}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Characters:</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      {content ? content.length : 0}
+                    </span>
+                  </div>
+                </div>
               </div>
 
               {/* Featured Image */}

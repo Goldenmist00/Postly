@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { Providers } from '@/src/components/providers'
+import { ThemeProvider } from '@/components/theme-provider'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -21,9 +22,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`font-sans antialiased`}>
-        <Providers>
-          {children}
-        </Providers>
+        <ThemeProvider
+          defaultTheme="system"
+          storageKey="postly-theme"
+        >
+          <Providers>
+            {children}
+          </Providers>
+        </ThemeProvider>
         <Analytics />
       </body>
     </html>

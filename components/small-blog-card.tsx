@@ -1,6 +1,7 @@
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, Clock } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { calculateReadingTime, formatReadingTime } from "@/lib/post-utils"
 
 interface Post {
   id: number
@@ -11,6 +12,7 @@ interface Post {
   image: string
   tags: string[]
   slug?: string
+  content?: string
   categories?: Array<{
     id: number
     name: string
@@ -41,6 +43,12 @@ export default function SmallBlogCard({ post }: { post: Post }) {
             <div>
               <p className="text-xs text-primary font-medium">{post.author}</p>
               <p className="text-xs text-muted-foreground">{post.date}</p>
+              {post.content && (
+                <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                  <Clock className="w-3 h-3" />
+                  <span>{formatReadingTime(calculateReadingTime(post.content))}</span>
+                </div>
+              )}
             </div>
             <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform flex-shrink-0" />
           </div>

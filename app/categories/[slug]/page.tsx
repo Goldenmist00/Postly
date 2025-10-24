@@ -58,7 +58,7 @@ export default function CategoryPage() {
             
             <div className="text-center">
               <h1 className="text-2xl font-bold text-gray-900 mb-4">Category Not Found</h1>
-              <p className="text-gray-600 mb-8">The category you're looking for doesn't exist.</p>
+              <p className="text-gray-600 mb-8">The category you&apos;re looking for doesn&apos;t exist.</p>
               <Link 
                 href="/" 
                 className="inline-flex items-center gap-2 text-blue-600 hover:underline"
@@ -131,7 +131,7 @@ export default function CategoryPage() {
                 No posts in this category yet
               </h3>
               <p className="text-gray-600 mb-6">
-                Be the first to create a post in the "{category.name}" category.
+                Be the first to create a post in the &quot;{category.name}&quot; category.
               </p>
               <Link 
                 href="/posts/create"
