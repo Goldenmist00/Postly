@@ -3,23 +3,37 @@
 import { trpc } from "@/src/utils/trpc";
 import Navigation from "@/components/navigation";
 import Link from "next/link";
+import { DashboardPostSkeleton } from "@/components/skeletons";
+import { useToast, ToastContainer } from "@/components/toast";
+import { useConfirmation } from "@/components/confirmation-modal";
 import { Plus, Edit, Trash2, Eye } from "lucide-react";
 
 export default function DashboardPage() {
   const { data: posts, isLoading, refetch } = trpc.posts.getAll.useQuery();
+  const { toasts, removeToast, success, error: showError } = useToast();
+  const { confirm, ConfirmationDialog } = useConfirmation();
+  
   const deletePost = trpc.posts.delete.useMutation({
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      success("Post deleted", `Post has been permanently deleted.`);
       refetch();
     },
     onError: (error) => {
-      alert("Failed to delete post: " + error.message);
+      showError("Failed to delete post", error.message);
     },
   });
 
   const handleDelete = (id: number, title: string) => {
-    if (confirm(`Are you sure you want to delete "${title}"?`)) {
-      deletePost.mutate({ id });
-    }
+    confirm({
+      title: "Delete Post",
+      message: `Are you sure you want to delete "${title}"? This action cannot be undone.`,
+      confirmText: "Yes, Delete",
+      cancelText: "Cancel",
+      type: "danger",
+      onConfirm: () => {
+        deletePost.mutate({ id });
+      },
+    });
   };
 
 
@@ -36,7 +50,7 @@ export default function DashboardPage() {
             </div>
             <Link 
               href="/posts/create"
-              className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              className="btn-gradient inline-flex items-center gap-2 hover-glow"
             >
               <Plus className="w-4 h-4" />
               Create Post
@@ -46,29 +60,23 @@ export default function DashboardPage() {
           {isLoading ? (
             <div className="grid gap-6">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                  <div className="animate-pulse">
-                    <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                  </div>
-                </div>
+                <DashboardPostSkeleton key={i} />
               ))}
             </div>
           ) : posts && posts.length > 0 ? (
             <div className="grid gap-6">
               {posts.map((post) => (
-                <div key={post.id} className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+                <div key={post.id} className="card-modern p-6 hover-lift animate-in">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
                           {post.title}
                         </h3>
-                        <span className={`text-xs px-2 py-1 rounded ${
+                        <span className={`text-xs px-3 py-1 rounded-full font-medium ${
                           post.published 
-                            ? "bg-green-100 text-green-700" 
-                            : "bg-yellow-100 text-yellow-700"
+                            ? "bg-gradient-to-r from-green-100 to-green-200 text-green-700 dark:from-green-900/30 dark:to-green-800/30 dark:text-green-300" 
+                            : "bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-700 dark:from-yellow-900/30 dark:to-yellow-800/30 dark:text-yellow-300"
                         }`}>
                           {post.published ? "Published" : "Draft"}
                         </span>
@@ -126,10 +134,14 @@ export default function DashboardPage() {
                       <button
                         onClick={() => handleDelete(post.id, post.title)}
                         disabled={deletePost.isPending}
-                        className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
+                        className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Delete Post"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        {deletePost.isPending ? (
+                          <div className="w-4 h-4 border-2 border-gray-300 border-t-red-600 rounded-full animate-spin"></div>
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -155,6 +167,12 @@ export default function DashboardPage() {
           )}
         </div>
       </main>
+      
+      {/* Toast Container */}
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
+      
+      {/* Confirmation Dialog */}
+      {ConfirmationDialog}
     </>
   );
 }

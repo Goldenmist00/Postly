@@ -1,7 +1,8 @@
-import { ArrowRight, Clock } from "lucide-react"
+import { ArrowRight, Clock, ImageIcon } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { calculateReadingTime, formatReadingTime } from "@/lib/post-utils"
+import { isValidImageUrl } from "@/lib/image-utils"
 
 interface Post {
   id: number
@@ -25,16 +26,27 @@ export default function FeaturedBlogCard({ post }: { post: Post }) {
   
   return (
     <Link href={href} className="group cursor-pointer block">
-      <div className="relative h-64 md:h-80 rounded-lg overflow-hidden mb-4 bg-gray-100">
-        <Image
-          src={post.image || "/placeholder.svg"}
-          alt={post.title}
-          fill
-          className="object-cover group-hover:scale-105 transition-transform duration-300"
-          onError={(e) => {
-            e.currentTarget.src = "/placeholder.svg";
-          }}
-        />
+      <div className="relative h-64 md:h-80 rounded-lg overflow-hidden mb-4 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800">
+        {isValidImageUrl(post.image) ? (
+          <Image
+            src={post.image}
+            alt={post.title}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            priority
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <ImageIcon className="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-2" />
+              <p className="text-sm text-gray-500 dark:text-gray-400">No image</p>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="flex items-start justify-between gap-2 mb-3">
@@ -60,10 +72,9 @@ export default function FeaturedBlogCard({ post }: { post: Post }) {
       <div className="flex flex-wrap gap-2">
         {post.categories && post.categories.length > 0 ? (
           post.categories.map((category, index) => (
-            <Link
+            <span
               key={category.id}
-              href={`/categories/${category.slug}`}
-              className={`text-xs px-2 py-1 rounded hover:opacity-80 transition-opacity ${
+              className={`text-xs px-2 py-1 rounded ${
                 index % 3 === 0
                   ? "bg-purple-100 text-purple-700"
                   : index % 3 === 1
@@ -72,7 +83,7 @@ export default function FeaturedBlogCard({ post }: { post: Post }) {
               }`}
             >
               {category.name}
-            </Link>
+            </span>
           ))
         ) : (
           <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600">

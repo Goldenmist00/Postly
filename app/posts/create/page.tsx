@@ -1,14 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/src/utils/trpc";
 import Navigation from "@/components/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { PostPreviewModal } from "@/components/post-preview-modal";
+import { RichTextEditor } from "@/components/rich-text-editor";
+import { DraftRestorationModal } from "@/components/draft-restoration-modal";
 import { calculateReadingTime, formatReadingTime, getWordCount } from "@/lib/post-utils";
-import { ArrowLeft, Eye, Save, Settings, Image as ImageIcon, Clock, FileText } from "lucide-react";
+import { isValidImageUrl } from "@/lib/image-utils";
+import { useToast, ToastContainer } from "@/components/toast";
+import { useKeyboardShortcuts, createPostShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { useAutoSave } from "@/hooks/use-auto-save";
+import { ArrowLeft, Eye, Save, Settings, Image as ImageIcon, Clock, FileText, Keyboard, Type } from "lucide-react";
 
 export default function CreatePostPage() {
   const router = useRouter();
@@ -20,23 +26,41 @@ export default function CreatePostPage() {
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const [showSettings, setShowSettings] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const [editorMode, setEditorMode] = useState<'simple' | 'rich'>('rich');
+  const [draftRestored, setDraftRestored] = useState(false);
+  const [initialLoad, setInitialLoad] = useState(true);
+  const [showDraftModal, setShowDraftModal] = useState(false);
+  const [savedDraft, setSavedDraft] = useState<any>(null);
+
+  const { toasts, removeToast, success, error: showError, info } = useToast();
 
   const { data: categories } = trpc.categories.getAll.useQuery();
   const createPost = trpc.posts.create.useMutation({
     onSuccess: (data) => {
-      router.push(`/posts/${data.slug}`);
+      success("Post created successfully!", `"${data.title}" has been ${published ? 'published' : 'saved as draft'}.`);
+      setIsDirty(false);
+      // Clear the draft since post was successfully created
+      localStorage.removeItem('postly-draft');
+      setTimeout(() => {
+        router.push(`/posts/${data.slug}`);
+      }, 1000);
     },
     onError: (error) => {
-      alert("Failed to create post: " + error.message);
+      showError("Failed to create post", error.message);
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    
     if (!title.trim() || !content.trim()) {
-      alert("Title and content are required");
+      showError("Missing required fields", "Title and content are required");
       return;
     }
+
+    info("Creating post...", "Please wait while we save your post.");
 
     createPost.mutate({
       title: title.trim(),
@@ -47,6 +71,112 @@ export default function CreatePostPage() {
       categoryIds: selectedCategories.length > 0 ? selectedCategories : undefined,
     });
   };
+
+  // Auto-save draft functionality
+  const autoSaveData = {
+    title,
+    content,
+    author,
+    image,
+    selectedCategories,
+  };
+
+  const { isSaving } = useAutoSave({
+    data: autoSaveData,
+    onSave: async (data) => {
+      // Only save if there's actual content and we're not in initial load
+      if (!data.title.trim() && !data.content.trim()) return;
+      if (initialLoad || draftRestored) return;
+      
+      // Save to localStorage as backup
+      localStorage.setItem('postly-draft', JSON.stringify({
+        ...data,
+        timestamp: Date.now(),
+      }));
+    },
+    delay: 3000,
+    enabled: isDirty && Boolean(title.trim() || content.trim()) && !initialLoad && !draftRestored,
+  });
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts(createPostShortcuts({
+    save: () => handleSubmit(),
+    preview: () => setShowPreview(true),
+    publish: () => {
+      setPublished(true);
+      setTimeout(() => handleSubmit(), 100);
+    },
+  }));
+
+  // Load draft from localStorage on mount (only once)
+  useEffect(() => {
+    if (!initialLoad) return;
+    
+    const draftData = localStorage.getItem('postly-draft');
+    if (draftData) {
+      try {
+        const draft = JSON.parse(draftData);
+        const isRecent = Date.now() - draft.timestamp < 24 * 60 * 60 * 1000; // 24 hours
+        
+        if (isRecent && (draft.title || draft.content)) {
+          setSavedDraft(draft);
+          setShowDraftModal(true);
+        } else {
+          // Remove old draft
+          localStorage.removeItem('postly-draft');
+        }
+      } catch (error) {
+        console.error("Failed to restore draft:", error);
+        localStorage.removeItem('postly-draft');
+      }
+    }
+    
+    setInitialLoad(false);
+  }, [initialLoad]);
+
+  // Track changes (but not during initial load or draft restoration)
+  useEffect(() => {
+    if (initialLoad || draftRestored) {
+      if (draftRestored) {
+        setDraftRestored(false);
+      }
+      return;
+    }
+    setIsDirty(true);
+  }, [title, content, author, image, selectedCategories, published, initialLoad, draftRestored]);
+
+  // Draft modal handlers
+  const handleRestoreDraft = () => {
+    if (savedDraft) {
+      setTitle(savedDraft.title || "");
+      setContent(savedDraft.content || "");
+      setAuthor(savedDraft.author || "");
+      setImage(savedDraft.image || "");
+      setSelectedCategories(savedDraft.selectedCategories || []);
+      setDraftRestored(true);
+      setShowDraftModal(false);
+      info("Draft restored", "Your previous work has been restored.");
+    }
+  };
+
+  const handleDiscardDraft = () => {
+    localStorage.removeItem('postly-draft');
+    setShowDraftModal(false);
+    setSavedDraft(null);
+  };
+
+  // Warn before leaving with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty && (title.trim() || content.trim())) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty, title, content]);
 
   return (
     <>
@@ -66,10 +196,51 @@ export default function CreatePostPage() {
             </div>
             
             <div className="flex items-center gap-3">
+              {/* Auto-save indicator */}
+              {isSaving && (
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                  <span>Saving...</span>
+                </div>
+              )}
+              
+              {isDirty && !isSaving && (title.trim() || content.trim()) && (
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                  <span>Unsaved changes</span>
+                  <button
+                    onClick={() => {
+                      if (confirm("Clear all content and start fresh?")) {
+                        setTitle("");
+                        setContent("");
+                        setAuthor("");
+                        setImage("");
+                        setSelectedCategories([]);
+                        setIsDirty(false);
+                        localStorage.removeItem('postly-draft');
+                        success("Draft cleared", "Starting with a fresh post.");
+                      }
+                    }}
+                    className="text-xs text-red-500 hover:text-red-700 underline ml-2"
+                  >
+                    Clear Draft
+                  </button>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setShowShortcuts(!showShortcuts)}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                title="Keyboard Shortcuts"
+              >
+                <Keyboard className="w-5 h-5" />
+              </button>
+
               <button
                 type="button"
                 onClick={() => setShowSettings(!showSettings)}
-                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                 title="Post Settings"
               >
                 <Settings className="w-5 h-5" />
@@ -97,13 +268,13 @@ export default function CreatePostPage() {
         </div>
       </div>
 
-      <main className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <main className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-blue-950">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-6">
             
             {/* Main Editor */}
             <div className="lg:col-span-3">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              <div className="card-modern overflow-hidden animate-in">
                 
                 {/* Title Input */}
                 <div className="p-6 border-b border-gray-100">
@@ -118,7 +289,7 @@ export default function CreatePostPage() {
                 </div>
 
                 {/* Featured Image */}
-                {image && (
+                {isValidImageUrl(image) && (
                   <div className="relative">
                     <div className="relative w-full h-64">
                       <Image 
@@ -134,15 +305,57 @@ export default function CreatePostPage() {
                   </div>
                 )}
 
+                {/* Editor Mode Toggle */}
+                <div className="px-6 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-1 bg-gray-200 dark:bg-gray-700 rounded-lg p-1">
+                      <button
+                        onClick={() => setEditorMode('rich')}
+                        className={`flex items-center gap-2 px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                          editorMode === 'rich'
+                            ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
+                        }`}
+                      >
+                        <Type className="w-4 h-4" />
+                        Rich Editor
+                      </button>
+                      <button
+                        onClick={() => setEditorMode('simple')}
+                        className={`flex items-center gap-2 px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                          editorMode === 'simple'
+                            ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
+                        }`}
+                      >
+                        <FileText className="w-4 h-4" />
+                        Simple
+                      </button>
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {editorMode === 'rich' ? 'Rich text with formatting tools' : 'Plain text editor'}
+                    </div>
+                  </div>
+                </div>
+
                 {/* Content Editor */}
                 <div className="p-6">
-                  <textarea
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    placeholder="Tell your story..."
-                    className="w-full min-h-[500px] text-lg text-gray-900 placeholder-gray-400 border-none outline-none resize-none leading-relaxed"
-                    style={{ fontFamily: 'Georgia, serif' }}
-                  />
+                  {editorMode === 'rich' ? (
+                    <RichTextEditor
+                      value={content}
+                      onChange={setContent}
+                      placeholder="Tell your story..."
+                      className="min-h-[500px] text-lg leading-relaxed p-4"
+                    />
+                  ) : (
+                    <textarea
+                      value={content}
+                      onChange={(e) => setContent(e.target.value)}
+                      placeholder="Tell your story..."
+                      className="w-full min-h-[500px] text-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 border-none outline-none resize-none leading-relaxed bg-transparent"
+                      style={{ fontFamily: 'Georgia, serif' }}
+                    />
+                  )}
                 </div>
               </div>
             </div>
@@ -190,17 +403,17 @@ export default function CreatePostPage() {
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                 <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
                   <ImageIcon className="w-4 h-4" />
-                  Featured Image
+                  Featured Image <span className="text-sm font-normal text-gray-500">(optional)</span>
                 </h3>
                 <input
-                  type="url"
+                  type="text"
                   value={image}
                   onChange={(e) => setImage(e.target.value)}
-                  placeholder="Image URL"
+                  placeholder="Image URL (optional)"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 />
                 <div className="text-xs text-gray-500 mt-2">
-                  Add a cover image to make your post stand out
+                  Add a cover image to make your post stand out (optional)
                 </div>
               </div>
 
@@ -299,6 +512,54 @@ export default function CreatePostPage() {
         image={image}
         categories={categories?.filter(cat => selectedCategories.includes(cat.id)) || []}
       />
+
+      {/* Keyboard Shortcuts Modal */}
+      {showShortcuts && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowShortcuts(false)}
+          />
+          <div className="relative bg-white dark:bg-gray-900 rounded-lg shadow-xl p-6 max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              Keyboard Shortcuts
+            </h3>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-400">Save post</span>
+                <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs">Ctrl + S</kbd>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-400">Preview post</span>
+                <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs">Ctrl + Shift + P</kbd>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-400">Publish post</span>
+                <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs">Ctrl + Enter</kbd>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowShortcuts(false)}
+              className="mt-4 w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Draft Restoration Modal */}
+      {savedDraft && (
+        <DraftRestorationModal
+          isOpen={showDraftModal}
+          onRestore={handleRestoreDraft}
+          onDiscard={handleDiscardDraft}
+          draftData={savedDraft}
+        />
+      )}
+
+      {/* Toast Container */}
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
     </>
   );
 }

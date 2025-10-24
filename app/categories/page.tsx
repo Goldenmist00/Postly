@@ -4,6 +4,8 @@ import { useState } from "react";
 import { trpc } from "@/src/utils/trpc";
 import Navigation from "@/components/navigation";
 import Link from "next/link";
+import { useToast, ToastContainer } from "@/components/toast";
+import { useConfirmation } from "@/components/confirmation-modal";
 import { Plus, Edit, Trash2, ArrowLeft } from "lucide-react";
 
 export default function CategoriesPage() {
@@ -12,45 +14,51 @@ export default function CategoriesPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
 
+  const { toasts, removeToast, success, error: showError } = useToast();
+  const { confirm, ConfirmationDialog } = useConfirmation();
+
   const { data: categories, isLoading, refetch } = trpc.categories.getAll.useQuery();
   
   const createCategory = trpc.categories.create.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
+      success("Category created", `"${data.name}" has been created successfully.`);
       refetch();
       setIsCreating(false);
       setName("");
       setDescription("");
     },
     onError: (error) => {
-      alert("Failed to create category: " + error.message);
+      showError("Failed to create category", error.message);
     },
   });
 
   const updateCategory = trpc.categories.update.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
+      success("Category updated", `"${data.name}" has been updated successfully.`);
       refetch();
       setEditingId(null);
       setName("");
       setDescription("");
     },
     onError: (error) => {
-      alert("Failed to update category: " + error.message);
+      showError("Failed to update category", error.message);
     },
   });
 
   const deleteCategory = trpc.categories.delete.useMutation({
     onSuccess: () => {
+      success("Category deleted", "Category has been permanently deleted.");
       refetch();
     },
     onError: (error) => {
-      alert("Failed to delete category: " + error.message);
+      showError("Failed to delete category", error.message);
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      alert("Category name is required");
+      showError("Missing required field", "Category name is required");
       return;
     }
 
@@ -82,16 +90,23 @@ export default function CategoriesPage() {
     setDescription("");
   };
 
-  const handleDelete = (id: number, name: string) => {
-    if (confirm(`Are you sure you want to delete "${name}"?`)) {
-      deleteCategory.mutate({ id });
-    }
+  const handleDelete = (id: number, categoryName: string) => {
+    confirm({
+      title: "Delete Category",
+      message: `Are you sure you want to delete "${categoryName}"? This will remove the category from all associated posts. This action cannot be undone.`,
+      confirmText: "Yes, Delete",
+      cancelText: "Cancel",
+      type: "danger",
+      onConfirm: () => {
+        deleteCategory.mutate({ id });
+      },
+    });
   };
 
   return (
     <>
       <Navigation />
-      <main className="min-h-screen bg-background">
+      <main className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-blue-950">
         <div className="max-w-4xl mx-auto px-4 py-12 md:py-16">
           <Link 
             href="/dashboard" 
@@ -109,7 +124,7 @@ export default function CategoriesPage() {
             {!isCreating && (
               <button
                 onClick={() => setIsCreating(true)}
-                className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                className="btn-gradient inline-flex items-center gap-2 hover-glow"
               >
                 <Plus className="w-4 h-4" />
                 Add Category
@@ -218,10 +233,14 @@ export default function CategoriesPage() {
                       <button
                         onClick={() => handleDelete(category.id, category.name)}
                         disabled={deleteCategory.isPending}
-                        className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
+                        className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Delete Category"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        {deleteCategory.isPending ? (
+                          <div className="w-4 h-4 border-2 border-gray-300 border-t-red-600 rounded-full animate-spin"></div>
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -247,6 +266,12 @@ export default function CategoriesPage() {
           )}
         </div>
       </main>
+      
+      {/* Toast Container */}
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
+      
+      {/* Confirmation Dialog */}
+      {ConfirmationDialog}
     </>
   );
 }

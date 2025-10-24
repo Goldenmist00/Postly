@@ -157,7 +157,7 @@ export const postsRouter = router({
           content: input.content,
           slug,
           author: input.author || "Anonymous",
-          image: input.image || "/placeholder.svg",
+          image: input.image || null,
           published: input.published || false,
         }).returning();
 
@@ -181,7 +181,7 @@ export const postsRouter = router({
           content: input.content,
           slug,
           author: input.author || "Anonymous",
-          image: input.image || "/placeholder.svg",
+          image: input.image || null,
           published: input.published || false,
           createdAt: new Date(),
           updatedAt: new Date(),
