@@ -32,7 +32,28 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
 
   // Convert HTML to markdown for storage
   const htmlToMarkdown = useCallback((html: string): string => {
-    return html
+    let markdown = html;
+    
+    // Handle ordered lists
+    markdown = markdown.replace(/<ol[^>]*>([\s\S]*?)<\/ol>/g, (match: string, content: string) => {
+      const items = content.match(/<li[^>]*>([\s\S]*?)<\/li>/g) || [];
+      return items.map((item: string, index: number) => {
+        const text = item.replace(/<li[^>]*>([\s\S]*?)<\/li>/, '$1').replace(/<[^>]*>/g, '').trim();
+        return `${index + 1}. ${text}`;
+      }).join('\n');
+    });
+    
+    // Handle unordered lists
+    markdown = markdown.replace(/<ul[^>]*>([\s\S]*?)<\/ul>/g, (match: string, content: string) => {
+      const items = content.match(/<li[^>]*>([\s\S]*?)<\/li>/g) || [];
+      return items.map((item: string) => {
+        const text = item.replace(/<li[^>]*>([\s\S]*?)<\/li>/, '$1').replace(/<[^>]*>/g, '').trim();
+        return `- ${text}`;
+      }).join('\n');
+    });
+    
+    // Handle other formatting
+    return markdown
       .replace(/<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*>/g, '![$2]($1)')
       .replace(/<strong>(.*?)<\/strong>/g, '**$1**')
       .replace(/<b>(.*?)<\/b>/g, '**$1**')
@@ -44,8 +65,6 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
       .replace(/<h1>(.*?)<\/h1>/g, '# $1')
       .replace(/<h2>(.*?)<\/h2>/g, '## $1')
       .replace(/<h3>(.*?)<\/h3>/g, '### $1')
-      .replace(/<ul><li>(.*?)<\/li><\/ul>/g, '- $1')
-      .replace(/<ol><li>(.*?)<\/li><\/ol>/g, '1. $1')
       .replace(/<a href="(.*?)">(.*?)<\/a>/g, '[$2]($1)')
       .replace(/<br\s*\/?>/g, '\n')
       .replace(/<div[^>]*>/g, '\n')
@@ -57,19 +76,38 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
 
   // Convert markdown to HTML for display
   const markdownToHtml = useCallback((markdown: string): string => {
-    return markdown
+    let html = markdown;
+    
+    // Handle numbered lists (convert consecutive numbered items to proper ol/li)
+    html = html.replace(/^(\d+\.\s+.+(?:\n\d+\.\s+.+)*)/gm, (match) => {
+      const items = match.split('\n').map(line => {
+        const text = line.replace(/^\d+\.\s+/, '').trim();
+        return `<li style="margin-bottom: 4px;">${text}</li>`;
+      }).join('');
+      return `<ol style="margin-left: 20px; padding-left: 10px; margin-bottom: 16px;">${items}</ol>`;
+    });
+    
+    // Handle bullet lists (convert consecutive bullet items to proper ul/li)
+    html = html.replace(/^(-\s+.+(?:\n-\s+.+)*)/gm, (match) => {
+      const items = match.split('\n').map(line => {
+        const text = line.replace(/^-\s+/, '').trim();
+        return `<li style="margin-bottom: 4px;">${text}</li>`;
+      }).join('');
+      return `<ul style="margin-left: 20px; padding-left: 10px; margin-bottom: 16px;">${items}</ul>`;
+    });
+    
+    // Handle other formatting
+    return html
       .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<div style="text-align: center; margin: 1rem 0;"><img src="$2" alt="$1" style="max-width: 100%; height: auto;" /></div>')
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
       .replace(/<u>(.*?)<\/u>/g, '<u>$1</u>')
       .replace(/`(.*?)`/g, '<code>$1</code>')
-      .replace(/^> (.*$)/gm, '<blockquote>$1</blockquote>')
-      .replace(/^### (.*$)/gm, '<h3>$1</h3>')
-      .replace(/^## (.*$)/gm, '<h2>$1</h2>')
-      .replace(/^# (.*$)/gm, '<h1>$1</h1>')
-      .replace(/^- (.*$)/gm, '<ul><li>$1</li></ul>')
-      .replace(/^1\. (.*$)/gm, '<ol><li>$1</li></ol>')
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
+      .replace(/^> (.*$)/gm, '<blockquote style="border-left: 4px solid #e2e8f0; padding-left: 16px; margin: 16px 0; font-style: italic;">$1</blockquote>')
+      .replace(/^### (.*$)/gm, '<h3 style="font-size: 1.25rem; font-weight: 600; margin: 16px 0 8px 0;">$1</h3>')
+      .replace(/^## (.*$)/gm, '<h2 style="font-size: 1.5rem; font-weight: 600; margin: 20px 0 12px 0;">$1</h2>')
+      .replace(/^# (.*$)/gm, '<h1 style="font-size: 2rem; font-weight: 700; margin: 24px 0 16px 0;">$1</h1>')
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color: #3b82f6; text-decoration: underline;">$1</a>')
       .replace(/\n/g, '<br>');
   }, []);
 
@@ -383,6 +421,88 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
     }
   }, [handleInput]);
 
+  // Create proper numbered list
+  const createNumberedList = useCallback(() => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+
+    const range = selection.getRangeAt(0);
+    
+    // Create ordered list structure
+    const ol = document.createElement('ol');
+    ol.style.marginLeft = '20px';
+    ol.style.paddingLeft = '10px';
+    
+    const li = document.createElement('li');
+    li.style.marginBottom = '4px';
+    li.textContent = 'List item';
+    
+    ol.appendChild(li);
+    
+    try {
+      // Insert line break before list
+      const beforeBr = document.createElement('br');
+      range.insertNode(beforeBr);
+      
+      // Insert the list
+      range.insertNode(ol);
+      
+      // Insert line break after list
+      const afterBr = document.createElement('br');
+      range.insertNode(afterBr);
+      
+      // Place cursor inside the list item
+      range.selectNodeContents(li);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      
+      handleInput();
+    } catch (error) {
+      console.error('Error creating numbered list:', error);
+    }
+  }, [handleInput]);
+
+  // Create proper bullet list
+  const createBulletList = useCallback(() => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+
+    const range = selection.getRangeAt(0);
+    
+    // Create unordered list structure
+    const ul = document.createElement('ul');
+    ul.style.marginLeft = '20px';
+    ul.style.paddingLeft = '10px';
+    
+    const li = document.createElement('li');
+    li.style.marginBottom = '4px';
+    li.textContent = 'List item';
+    
+    ul.appendChild(li);
+    
+    try {
+      // Insert line break before list
+      const beforeBr = document.createElement('br');
+      range.insertNode(beforeBr);
+      
+      // Insert the list
+      range.insertNode(ul);
+      
+      // Insert line break after list
+      const afterBr = document.createElement('br');
+      range.insertNode(afterBr);
+      
+      // Place cursor inside the list item
+      range.selectNodeContents(li);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      
+      handleInput();
+    } catch (error) {
+      console.error('Error creating bullet list:', error);
+    }
+  }, [handleInput]);
+
   const applyBold = useCallback(() => {
     toggleFormatting('strong', activeFormats.bold);
   }, [toggleFormatting, activeFormats.bold]);
@@ -502,8 +622,55 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
     setShowLinkEditor(true);
   }, []);
 
+  // Handle Enter key in lists
+  const handleEnterInList = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return false;
+
+    const range = selection.getRangeAt(0);
+    let node = range.startContainer;
+    
+    // Find if we're inside a list item
+    while (node && node !== editorRef.current) {
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        const element = node as Element;
+        if (element.tagName === 'LI') {
+          e.preventDefault();
+          
+          // Create new list item
+          const newLi = document.createElement('li');
+          newLi.style.marginBottom = '4px';
+          newLi.textContent = '';
+          
+          // Insert after current list item
+          if (element.parentNode) {
+            element.parentNode.insertBefore(newLi, element.nextSibling);
+            
+            // Place cursor in new list item
+            range.selectNodeContents(newLi);
+            range.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(range);
+            
+            handleInput();
+            return true;
+          }
+        }
+      }
+      node = node.parentNode as Node;
+    }
+    return false;
+  }, [handleInput]);
+
   // Handle keyboard shortcuts
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    // Handle Enter key in lists
+    if (e.key === 'Enter' && !e.shiftKey) {
+      if (handleEnterInList(e)) {
+        return;
+      }
+    }
+    
     if (e.ctrlKey || e.metaKey) {
       switch (e.key.toLowerCase()) {
         case 'b':
@@ -535,9 +702,17 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
           e.preventDefault();
           setShowImageEditor(true);
           break;
+        case '8':
+          e.preventDefault();
+          createBulletList();
+          break;
+        case '7':
+          e.preventDefault();
+          createNumberedList();
+          break;
       }
     }
-  }, [applyBold, applyItalic, applyUnderline, applyCode, openLinkEditor]);
+  }, [applyBold, applyItalic, applyUnderline, applyCode, openLinkEditor, createBulletList, createNumberedList, handleEnterInList]);
 
   const toolbarButtons = [
     {
@@ -578,14 +753,14 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
     {
       icon: List,
       label: "Bullet List",
-      action: () => insertText('\n• '),
+      action: createBulletList,
       shortcut: "Ctrl+Shift+8",
       isActive: false
     },
     {
       icon: ListOrdered,
       label: "Numbered List", 
-      action: () => insertText('\n1. '),
+      action: createNumberedList,
       shortcut: "Ctrl+Shift+7",
       isActive: false
     },
