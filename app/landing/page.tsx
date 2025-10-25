@@ -8,9 +8,14 @@ import { PostCardSkeleton } from "@/components/skeletons";
 
 export default function LandingPage() {
   // Fetch published posts from database
-  const { data: posts, isLoading } = trpc.posts.getAll.useQuery({
+  const { data: posts, isLoading, error } = trpc.posts.getAll.useQuery({
     published: true,
   });
+
+  // Debug logging
+  console.log("Landing page - Posts data:", posts);
+  console.log("Landing page - Is loading:", isLoading);
+  console.log("Landing page - Error:", error);
 
   // Transform posts to match BlogCard interface
   const transformedPosts = posts?.slice(0, 6).map((post: any) => ({
@@ -29,6 +34,8 @@ export default function LandingPage() {
     content: post.content,
     categories: post.categories || [],
   })) || [];
+
+  console.log("Landing page - Transformed posts:", transformedPosts);
 
   return (
     <div className="min-h-screen bg-white">
@@ -151,8 +158,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* All Blog Posts Section */}
-      <section className="py-20 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+      {/* All Blog Posts Section - Made more visible */}
+      <section className="py-20 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 border-t-4 border-blue-500">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16 animate-in">
             <h2 className="text-4xl font-bold mb-4">
@@ -161,34 +168,53 @@ export default function LandingPage() {
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto leading-relaxed">
               Discover the latest stories, insights, and ideas from our community of writers.
             </p>
+            {/* Debug info */}
+            <div className="mt-4 text-sm text-gray-500">
+              Debug: {isLoading ? "Loading..." : `Found ${posts?.length || 0} posts, showing ${transformedPosts.length}`}
+            </div>
           </div>
 
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-              {[...Array(6)].map((_, i) => (
-                <PostCardSkeleton key={i} />
-              ))}
-            </div>
-          ) : transformedPosts.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-              {transformedPosts.map((post: any) => (
-                <BlogCard key={post.id} post={post} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
-                No blog posts available yet. Be the first to create one!
-              </p>
-              <Link 
-                href="/posts/create"
-                className="btn-gradient inline-flex items-center gap-2 hover-glow"
-              >
-                Create First Post
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          )}
+          {/* Always render something to make section visible */}
+          <div className="min-h-[400px]">
+            {error ? (
+              <div className="text-center py-12 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                <p className="text-red-600 dark:text-red-400 mb-4">
+                  Error loading posts: {error.message}
+                </p>
+                <button 
+                  onClick={() => window.location.reload()}
+                  className="btn-secondary"
+                >
+                  Retry
+                </button>
+              </div>
+            ) : isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+                {[...Array(6)].map((_, i) => (
+                  <PostCardSkeleton key={i} />
+                ))}
+              </div>
+            ) : transformedPosts.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+                {transformedPosts.map((post: any) => (
+                  <BlogCard key={post.id} post={post} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  No blog posts available yet. Be the first to create one!
+                </p>
+                <Link 
+                  href="/posts/create"
+                  className="btn-gradient inline-flex items-center gap-2 hover-glow"
+                >
+                  Create First Post
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            )}
+          </div>
 
           {/* Show pagination and call-to-action only if there are posts */}
           {transformedPosts.length > 0 && (

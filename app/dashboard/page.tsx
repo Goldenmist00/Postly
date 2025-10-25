@@ -58,6 +58,38 @@ export default function DashboardPage() {
             </Link>
           </div>
 
+          {/* Statistics Cards */}
+          {posts && posts.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <div className="card-modern p-6 text-center">
+                <div className="text-2xl font-bold text-primary mb-1">
+                  {posts.length}
+                </div>
+                <div className="text-sm text-secondary">Total Posts</div>
+              </div>
+              <div className="card-modern p-6 text-center">
+                <div className="text-2xl font-bold text-green-600 mb-1">
+                  {posts.filter((post: any) => post.published).length}
+                </div>
+                <div className="text-sm text-secondary">Published</div>
+              </div>
+              <div className="card-modern p-6 text-center">
+                <div className="text-2xl font-bold text-yellow-600 mb-1">
+                  {posts.filter((post: any) => !post.published).length}
+                </div>
+                <div className="text-sm text-secondary">Drafts</div>
+              </div>
+            </div>
+          )}
+
+          {/* All Posts Section */}
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-primary mb-2">All posts</h2>
+            <p className="text-secondary">
+              {isLoading ? "Loading posts..." : posts ? `${posts.length} ${posts.length === 1 ? 'post' : 'posts'} total` : "No posts found"}
+            </p>
+          </div>
+
           {isLoading ? (
             <div className="grid gap-6">
               {[...Array(3)].map((_, i) => (
