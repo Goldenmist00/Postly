@@ -23,7 +23,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`font-sans antialiased`}>
         <ThemeProvider
-          defaultTheme="system"
+          defaultTheme="light"
           storageKey="postly-theme"
         >
           <Providers>

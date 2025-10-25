@@ -268,23 +268,23 @@ export default function CreatePostPage() {
         </div>
       </div>
 
-      <main className="page-bg-alt">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-6">
+      <main className="page-bg-alt min-h-screen writing-mode">
+        <div className="writing-container">
+          <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 p-4 lg:p-6">
             
             {/* Main Editor */}
-            <div className="lg:col-span-3">
-              <div className="card-modern overflow-hidden animate-in">
+            <div className="xl:col-span-4">
+              <div className="card-modern overflow-hidden animate-in shadow-xl">
                 
                 {/* Title Input */}
-                <div className="p-6 border-b border-gray-100">
+                <div className="p-8 border-b border-gray-100 dark:border-gray-700">
                   <input
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Post title"
-                    className="w-full text-3xl font-bold text-primary placeholder-gray-400 dark:placeholder-slate-500 border-none outline-none resize-none bg-transparent"
-                    style={{ fontFamily: 'inherit' }}
+                    placeholder="Write your story title..."
+                    className="w-full text-4xl lg:text-5xl font-bold text-primary placeholder-gray-400 dark:placeholder-slate-500 border-none outline-none resize-none bg-transparent leading-tight writing-title writing-content"
+                    style={{ fontFamily: 'Georgia, serif' }}
                   />
                 </div>
 
@@ -339,29 +339,40 @@ export default function CreatePostPage() {
                 </div>
 
                 {/* Content Editor */}
-                <div className="p-6">
+                <div className="p-0">
                   {editorMode === 'rich' ? (
                     <RichTextEditor
                       value={content}
                       onChange={setContent}
-                      placeholder="Tell your story..."
-                      className="min-h-[500px] text-lg leading-relaxed p-4"
+                      placeholder="Start writing your story... The editor will expand as you write."
+                      className="text-xl leading-relaxed focus:outline-none"
                     />
                   ) : (
-                    <textarea
-                      value={content}
-                      onChange={(e) => setContent(e.target.value)}
-                      placeholder="Tell your story..."
-                      className="w-full min-h-[500px] text-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 border-none outline-none resize-none leading-relaxed bg-transparent"
-                      style={{ fontFamily: 'Georgia, serif' }}
-                    />
+                    <div className="p-8">
+                      <textarea
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        placeholder="Start writing your story... The editor will expand as you write."
+                        className="w-full text-xl text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 border-none outline-none resize-none leading-relaxed bg-transparent"
+                        style={{ 
+                          fontFamily: 'Georgia, serif',
+                          minHeight: 'calc(100vh - 400px)',
+                          lineHeight: '1.8'
+                        }}
+                        onInput={(e) => {
+                          const target = e.target as HTMLTextAreaElement;
+                          target.style.height = 'auto';
+                          target.style.height = `${Math.max(target.scrollHeight, window.innerHeight - 400)}px`;
+                        }}
+                      />
+                    </div>
                   )}
                 </div>
               </div>
             </div>
 
             {/* Sidebar */}
-            <div className="lg:col-span-1 space-y-6">
+            <div className="xl:col-span-1 space-y-6">
               
               {/* Publish Settings */}
               <div className="card-modern p-6">
