@@ -180,98 +180,92 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* All Blog Posts Section - Made more visible */}
-      <section className="py-20 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 border-t-4 border-blue-500">
+      {/* ALL BLOG POSTS SECTION - GUARANTEED VISIBLE */}
+      <section className="py-20 bg-red-100 border-8 border-red-500">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-16 animate-in">
-            <h2 className="text-4xl font-bold mb-4">
-              <span className="text-gray-900 dark:text-gray-100">All blog posts</span>
+          
+          {/* ALWAYS VISIBLE HEADER */}
+          <div className="text-center mb-16">
+            <h2 className="text-6xl font-bold text-red-600 mb-4">
+              🔴 ALL BLOG POSTS 🔴
             </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto leading-relaxed">
-              Discover the latest stories, insights, and ideas from our community of writers.
+            <p className="text-2xl text-red-800 font-bold">
+              THIS SECTION SHOULD ALWAYS BE VISIBLE!
             </p>
-            {/* Debug info */}
-            <div className="mt-4 text-sm text-gray-500">
-              Debug: {isLoading ? "Loading..." : `Found ${posts?.length || 0} posts, showing ${transformedPosts.length}`}
-            </div>
-          </div>
-
-          {/* Always render something to make section visible */}
-          <div className="min-h-[400px] bg-white dark:bg-gray-800 rounded-lg p-8">
-            <div className="text-center mb-8">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                Latest Posts
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                {isLoading ? "Loading posts..." : error ? "Error loading posts" : `${transformedPosts.length} posts found`}
+            <div className="mt-4 p-4 bg-yellow-200 rounded-lg">
+              <p className="text-black font-bold">
+                Debug Info: Loading={isLoading ? "YES" : "NO"} | 
+                Posts={posts?.length || 0} | 
+                Error={error ? "YES" : "NO"}
               </p>
             </div>
-
-            {error ? (
-              <div className="text-center py-12 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                <p className="text-red-600 dark:text-red-400 mb-4">
-                  Error loading posts: {error.message}
-                </p>
-                <button 
-                  onClick={() => window.location.reload()}
-                  className="btn-secondary"
-                >
-                  Retry
-                </button>
-              </div>
-            ) : isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {[...Array(6)].map((_, i) => (
-                  <PostCardSkeleton key={i} />
-                ))}
-              </div>
-            ) : transformedPosts.length > 0 ? (
-              <div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
-                  {transformedPosts.map((post: any, index: number) => {
-                    try {
-                      return <BlogCard key={post.id} post={post} />;
-                    } catch (err) {
-                      console.error("Error rendering BlogCard:", err, post);
-                      return (
-                        <div key={post.id || index} className="card-modern p-6">
-                          <h3 className="font-bold text-red-600">Error rendering post</h3>
-                          <p className="text-sm text-gray-500">Post ID: {post.id}</p>
-                          <p className="text-sm text-gray-500">Title: {post.title}</p>
-                        </div>
-                      );
-                    }
-                  })}
-                </div>
-                
-                {/* View All Posts Button */}
-                <div className="text-center">
-                  <Link 
-                    href="/"
-                    className="btn-gradient inline-flex items-center gap-2 hover-glow"
-                  >
-                    View All Posts
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-12 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-                <p className="text-gray-600 dark:text-gray-400 mb-6">
-                  No blog posts available yet. Be the first to create one!
-                </p>
-                <Link 
-                  href="/posts/create"
-                  className="btn-gradient inline-flex items-center gap-2 hover-glow"
-                >
-                  Create First Post
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </div>
-            )}
           </div>
 
+          {/* SIMPLE CONTENT AREA */}
+          <div className="bg-white border-4 border-black p-8 rounded-lg min-h-[500px]">
+            
+            {/* LOADING STATE */}
+            {isLoading && (
+              <div className="text-center">
+                <h3 className="text-3xl font-bold text-blue-600 mb-4">LOADING POSTS...</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {[1,2,3,4,5,6].map((i) => (
+                    <div key={i} className="bg-gray-200 h-64 rounded-lg flex items-center justify-center">
+                      <span className="text-2xl font-bold">Loading {i}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
+            {/* ERROR STATE */}
+            {error && (
+              <div className="text-center">
+                <h3 className="text-3xl font-bold text-red-600 mb-4">ERROR LOADING POSTS!</h3>
+                <p className="text-xl text-red-500 mb-4">{error.message}</p>
+                <button 
+                  onClick={() => window.location.reload()}
+                  className="bg-red-500 text-white px-6 py-3 rounded-lg text-xl font-bold"
+                >
+                  RETRY
+                </button>
+              </div>
+            )}
+
+            {/* SUCCESS STATE */}
+            {!isLoading && !error && (
+              <div className="text-center">
+                <h3 className="text-3xl font-bold text-green-600 mb-4">
+                  POSTS LOADED! Found {transformedPosts.length} posts
+                </h3>
+                
+                {transformedPosts.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {transformedPosts.map((post, index) => (
+                      <div key={post.id || index} className="bg-blue-100 p-6 rounded-lg border-2 border-blue-500">
+                        <h4 className="text-xl font-bold text-blue-800 mb-2">{post.title}</h4>
+                        <p className="text-blue-600 mb-2">By: {post.author}</p>
+                        <p className="text-blue-600 mb-2">Date: {post.date}</p>
+                        <p className="text-blue-700">{post.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-yellow-100 p-8 rounded-lg border-2 border-yellow-500">
+                    <h4 className="text-2xl font-bold text-yellow-800 mb-4">NO POSTS FOUND</h4>
+                    <p className="text-yellow-700 mb-4">Create your first blog post!</p>
+                    <Link 
+                      href="/posts/create"
+                      className="bg-yellow-500 text-white px-6 py-3 rounded-lg text-xl font-bold inline-block"
+                    >
+                      CREATE FIRST POST
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
+
+          </div>
         </div>
       </section>
 
