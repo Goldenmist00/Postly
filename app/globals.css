@@ -311,8 +311,9 @@
   100% {
     background-position: -200% 0;
   }
-}/* Additio
-nal dark mode utilities */
+}
+
+/* Additional dark mode utilities */
 .dark-card {
   background: var(--bg-primary);
   border: 1px solid var(--border-light);
@@ -369,4 +370,105 @@ nal dark mode utilities */
 /* Better focus states for dark mode */
 .dark .focus-ring:focus {
   box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.4);
+}
+
+/* Enhanced writing experience */
+.writing-mode {
+  background: var(--bg-primary);
+  min-height: 100vh;
+}
+
+.writing-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.editor-focus-mode {
+  background: var(--bg-primary);
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.editor-focus-mode .rich-text-editor {
+  border: none;
+  background: transparent;
+}
+
+/* Auto-expanding editor styles */
+.auto-expand-editor {
+  transition: min-height 0.2s ease-out;
+  overflow-y: visible;
+}
+
+.auto-expand-editor:focus-within {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+/* Enhanced placeholder styling */
+[contenteditable]:empty:before {
+  content: attr(data-placeholder);
+  color: var(--text-muted);
+  pointer-events: none;
+  position: absolute;
+  opacity: 0.6;
+  font-style: italic;
+}
+
+[contenteditable]:focus:before {
+  opacity: 0.4;
+}
+
+/* Better focus states for writing */
+.writing-title:focus {
+  outline: none;
+  background: linear-gradient(90deg, transparent 0%, rgba(59, 130, 246, 0.05) 50%, transparent 100%);
+}
+
+/* Smooth scrolling for long content */
+.editor-container {
+  scroll-behavior: smooth;
+}
+
+/* Enhanced typography for writing */
+.writing-content {
+  font-feature-settings: "liga" 1, "kern" 1;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Responsive writing layout */
+@media (max-width: 1280px) {
+  .writing-container {
+    max-width: 1200px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .writing-container {
+    max-width: 100%;
+    padding: 0 1rem;
+  }
+}
+
+/* Focus mode for distraction-free writing */
+.focus-mode {
+  background: var(--bg-primary);
+}
+
+.focus-mode .card-modern {
+  box-shadow: none;
+  border: none;
+  background: transparent;
+}
+
+.focus-mode .nav-modern {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+}
+
+.dark .focus-mode .nav-modern {
+  background: rgba(15, 23, 42, 0.8);
 }

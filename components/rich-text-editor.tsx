@@ -20,6 +20,7 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
   const [isUpdating, setIsUpdating] = useState(false);
   const [initialized, setInitialized] = useState(false);
   const lastValueRef = useRef<string>("");
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
   
   // Track active formatting states
   const [activeFormats, setActiveFormats] = useState({
@@ -111,6 +112,55 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
         break;
       }
       charIndex = nextCharIndex;
+    }
+  }, []);
+
+  // Auto-expanding functionality
+  useEffect(() => {
+    if (editorRef.current) {
+      const editor = editorRef.current;
+      
+      // Function to adjust height based on content
+      const adjustHeight = () => {
+        const minHeight = Math.max(400, window.innerHeight - 400);
+        const scrollHeight = editor.scrollHeight;
+        const currentHeight = editor.offsetHeight;
+        
+        // If content exceeds current height, expand the editor
+        if (scrollHeight > currentHeight) {
+          editor.style.minHeight = `${Math.max(minHeight, scrollHeight + 50)}px`;
+        } else if (scrollHeight < currentHeight - 100 && currentHeight > minHeight) {
+          // Shrink if content is much smaller, but not below minimum
+          editor.style.minHeight = `${Math.max(minHeight, scrollHeight + 50)}px`;
+        }
+      };
+
+      // Set up ResizeObserver to watch for content changes
+      if (window.ResizeObserver) {
+        resizeObserverRef.current = new ResizeObserver(() => {
+          adjustHeight();
+        });
+        resizeObserverRef.current.observe(editor);
+      }
+
+      // Also adjust on input events
+      const handleResize = () => {
+        setTimeout(adjustHeight, 0);
+      };
+
+      editor.addEventListener('input', handleResize);
+      editor.addEventListener('paste', handleResize);
+      
+      // Initial height adjustment
+      adjustHeight();
+
+      return () => {
+        if (resizeObserverRef.current) {
+          resizeObserverRef.current.disconnect();
+        }
+        editor.removeEventListener('input', handleResize);
+        editor.removeEventListener('paste', handleResize);
+      };
     }
   }, []);
 
@@ -556,7 +606,7 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
   ];
 
   return (
-    <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800">
+    <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800 auto-expand-editor editor-container">
       {/* Toolbar */}
       <div className="flex items-center gap-1 p-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
         {toolbarButtons.map((button, index) => (
@@ -591,10 +641,14 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
         onMouseUp={handleSelectionChange}
         onKeyUp={handleSelectionChange}
         onFocus={handleSelectionChange}
-        className={`w-full min-h-[200px] p-4 border-none outline-none bg-transparent text-gray-900 dark:text-gray-100 ${className}`}
+        className={`w-full min-h-[400px] max-h-none p-6 border-none outline-none bg-transparent text-gray-900 dark:text-gray-100 overflow-y-auto writing-content ${className}`}
         style={{ 
           fontFamily: 'Georgia, serif',
-          lineHeight: '1.6'
+          lineHeight: '1.8',
+          fontSize: '20px',
+          minHeight: 'calc(100vh - 400px)', // Dynamic height based on viewport
+          maxHeight: 'none', // Allow unlimited growth
+          resize: 'none'
         }}
         data-placeholder={placeholder}
         suppressContentEditableWarning={true}
