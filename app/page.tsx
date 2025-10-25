@@ -134,7 +134,7 @@ export default function BlogPage() {
           {/* Search and Filter Section */}
           <div className="mb-8 space-y-4">
             {/* Search Bar */}
-            <div className="relative max-w-md">
+            <div className="relative w-full max-w-md mx-auto md:mx-0">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <Search className="h-5 w-5 text-gray-400" />
               </div>
@@ -143,7 +143,7 @@ export default function BlogPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search posts, authors, or categories..."
-                className="input-modern w-full pl-12"
+                className="search-input"
               />
             </div>
 
@@ -157,7 +157,7 @@ export default function BlogPage() {
                   id="category-select"
                   value={selectedCategory}
                   onChange={(e) => handleCategoryChange(e.target.value)}
-                  className="input-modern min-w-[200px]"
+                  className="input-modern min-w-[200px] w-full sm:w-auto"
                   disabled={isLoading}
                 >
                   <option value="all">All Posts ({allPosts?.length || 0})</option>
