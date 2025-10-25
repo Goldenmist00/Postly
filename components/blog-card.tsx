@@ -25,7 +25,7 @@ export default function BlogCard({ post }: { post: Post }) {
   const href = `/posts/${post.slug || post.id}`;
   
   return (
-    <div className="card-modern hover-lift animate-in group cursor-pointer">
+    <div className="card-modern hover-lift animate-in group cursor-pointer hover-glow">
       <Link href={href} className="block">
         <div className="relative h-48 rounded-t-xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800">
           {isValidImageUrl(post.image) ? (

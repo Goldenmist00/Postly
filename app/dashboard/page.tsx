@@ -4,12 +4,13 @@ import { trpc } from "@/src/utils/trpc";
 import Navigation from "@/components/navigation";
 import Link from "next/link";
 import { DashboardPostSkeleton } from "@/components/skeletons";
-import { useToast, ToastContainer } from "@/components/toast";
+import { useToast } from "@/src/hooks/use-toast";
+import { ToastContainer } from "@/components/toast";
 import { useConfirmation } from "@/components/confirmation-modal";
 import { Plus, Edit, Trash2, Eye } from "lucide-react";
 
 export default function DashboardPage() {
-  const { data: posts, isLoading, refetch } = trpc.posts.getAll.useQuery();
+  const { data: posts, isLoading, refetch } = trpc.posts.getAll.useQuery({});
   const { toasts, removeToast, success, error: showError } = useToast();
   const { confirm, ConfirmationDialog } = useConfirmation();
   
@@ -41,12 +42,12 @@ export default function DashboardPage() {
   return (
     <>
       <Navigation />
-      <main className="min-h-screen bg-background">
+      <main className="page-bg">
         <div className="max-w-7xl mx-auto px-4 py-12 md:py-16">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-              <p className="text-gray-600">Manage your blog posts</p>
+              <h1 className="text-3xl font-bold text-primary">Dashboard</h1>
+              <p className="text-secondary">Manage your blog posts</p>
             </div>
             <Link 
               href="/posts/create"
@@ -65,7 +66,7 @@ export default function DashboardPage() {
             </div>
           ) : posts && posts.length > 0 ? (
             <div className="grid gap-6">
-              {posts.map((post) => (
+              {posts.map((post: any) => (
                 <div key={post.id} className="card-modern p-6 hover-lift animate-in">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -81,22 +82,22 @@ export default function DashboardPage() {
                           {post.published ? "Published" : "Draft"}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
                         {post.content.substring(0, 150)}...
                       </p>
                       
                       {/* Categories */}
                       {post.categories && post.categories.length > 0 && (
                         <div className="flex flex-wrap gap-1 mb-2">
-                          {post.categories.map((category, index) => (
+                          {post.categories.map((category: any, index: number) => (
                             <span
                               key={category.id}
                               className={`text-xs px-2 py-1 rounded ${
                                 index % 3 === 0
-                                  ? "bg-purple-100 text-purple-700"
+                                  ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
                                   : index % 3 === 1
-                                    ? "bg-pink-100 text-pink-700"
-                                    : "bg-green-100 text-green-700"
+                                    ? "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300"
+                                    : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
                               }`}
                             >
                               {category.name}
@@ -105,7 +106,7 @@ export default function DashboardPage() {
                         </div>
                       )}
                       
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                         <span>By {post.author}</span>
                         <span>
                           {new Date(post.createdAt).toLocaleDateString('en-US', {
@@ -119,14 +120,14 @@ export default function DashboardPage() {
                     <div className="flex items-center gap-2 ml-4">
                       <Link 
                         href={`/posts/${post.slug}`}
-                        className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
+                        className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
                         title="View Post"
                       >
                         <Eye className="w-4 h-4" />
                       </Link>
                       <Link 
                         href={`/edit/${post.id}`}
-                        className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
+                        className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
                         title="Edit Post"
                       >
                         <Edit className="w-4 h-4" />
@@ -149,16 +150,16 @@ export default function DashboardPage() {
               ))}
             </div>
           ) : (
-            <div className="bg-white rounded-lg p-12 text-center shadow-sm border border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <div className="card-modern p-12 text-center">
+              <h3 className="text-lg font-semibold text-primary mb-2">
                 No posts yet
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-secondary mb-6">
                 Create your first blog post to get started.
               </p>
               <Link 
                 href="/posts/create"
-                className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors"
+                className="btn-gradient inline-flex items-center gap-2 hover-glow"
               >
                 <Plus className="w-4 h-4" />
                 Create Your First Post

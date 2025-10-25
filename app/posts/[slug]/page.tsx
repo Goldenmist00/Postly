@@ -74,7 +74,7 @@ export default function PostPage() {
           {isValidImageUrl(post.image) && <meta name="twitter:image" content={post.image} />}
         </Head>
       )}
-      <main className="min-h-screen bg-white dark:bg-gray-900">
+      <main className="page-bg">
       <div className="max-w-4xl mx-auto px-4 py-12">
         {/* Back button */}
         <Link 
@@ -159,7 +159,7 @@ export default function PostPage() {
           <div className="mt-8 pt-6 border-t border-gray-200">
             <h3 className="text-sm font-medium text-gray-900 mb-3">Categories</h3>
             <div className="flex flex-wrap gap-2">
-              {post.categories.map((category, index) => (
+              {post.categories.map((category: any, index: number) => (
                 <Link
                   key={category.id}
                   href={`/categories/${category.slug}`}
