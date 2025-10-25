@@ -8,12 +8,11 @@ import SmallBlogCard from "@/components/small-blog-card"
 import Navigation from "@/components/navigation"
 import { PostCardSkeleton, FeaturedPostSkeleton, SmallPostSkeleton } from "@/components/skeletons"
 import { trpc } from "@/src/utils/trpc"
+import { useUIStore } from "@/src/store"
 
 export default function BlogPage() {
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const { searchQuery, setSearchQuery, selectedCategory, setSelectedCategory } = useUIStore();
   const [isFiltering, setIsFiltering] = useState(false);
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [currentPage, setCurrentPage] = useState(1);
   
   // Fetch all posts once and filter client-side for better performance
   const { data: allPosts, isLoading } = trpc.posts.getAll.useQuery({
@@ -106,7 +105,7 @@ export default function BlogPage() {
   }
 
   // Transform filtered posts to match component interface
-  const transformedPosts = filteredPosts?.map(post => ({
+  const transformedPosts = filteredPosts?.map((post: any) => ({
     id: post.id,
     title: post.title,
     description: post.content.substring(0, 150) + "...",
@@ -130,7 +129,7 @@ export default function BlogPage() {
   return (
     <>
       <Navigation />
-      <main className="min-h-screen bg-background">
+      <main className="page-bg">
         <div className="max-w-7xl mx-auto px-4 py-12 md:py-16">
           {/* Search and Filter Section */}
           <div className="mb-8 space-y-4">
@@ -144,21 +143,21 @@ export default function BlogPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search posts, authors, or categories..."
-                className="block w-full pl-12 pr-4 py-3 glass dark:glass-dark rounded-xl focus-ring text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200"
+                className="input-modern w-full pl-12"
               />
             </div>
 
             {/* Category Filter */}
             {categories && categories.length > 0 && (
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                <label htmlFor="category-select" className="text-lg font-semibold text-gray-900">
+                <label htmlFor="category-select" className="text-lg font-semibold text-primary">
                   Filter by Category:
                 </label>
                 <select
                   id="category-select"
                   value={selectedCategory}
                   onChange={(e) => handleCategoryChange(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 min-w-[200px] transition-all duration-200"
+                  className="input-modern min-w-[200px]"
                   disabled={isLoading}
                 >
                   <option value="all">All Posts ({allPosts?.length || 0})</option>
@@ -178,7 +177,7 @@ export default function BlogPage() {
 
             {/* Results Count */}
             {(searchQuery.trim() || selectedCategory !== "all") && (
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-muted">
                 {filteredPosts.length} {filteredPosts.length === 1 ? 'post' : 'posts'} found
                 {searchQuery.trim() && ` for "${searchQuery}"`}
                 {selectedCategory !== "all" && ` in ${categories?.find(c => c.slug === selectedCategory)?.name}`}
@@ -188,7 +187,7 @@ export default function BlogPage() {
 
           {/* Recent blog posts section */}
           <section className="mb-16">
-            <h2 className="text-2xl font-bold text-foreground mb-8">
+            <h2 className="text-2xl font-bold text-primary mb-8">
               {isFiltering ? (
                 <span className="opacity-50">Filtering...</span>
               ) : selectedCategory === "all" ? (
@@ -202,21 +201,21 @@ export default function BlogPage() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Featured large post */}
                 <div className="lg:col-span-1">
-                  {featuredPosts.map((post) => (
+                  {featuredPosts.map((post: any) => (
                     <FeaturedBlogCard key={post.id} post={post} />
                   ))}
                 </div>
 
                 {/* Small featured posts */}
                 <div className="lg:col-span-2 flex flex-col gap-6">
-                  {smallFeaturedPosts.map((post) => (
+                  {smallFeaturedPosts.map((post: any) => (
                     <SmallBlogCard key={post.id} post={post} />
                   ))}
                 </div>
               </div>
             ) : (
               <div className="text-center py-12">
-                <p className="text-muted-foreground">No blog posts found. Create your first post!</p>
+                <p className="text-muted">No blog posts found. Create your first post!</p>
               </div>
             )}
           </section>
@@ -224,36 +223,36 @@ export default function BlogPage() {
           {/* All blog posts section */}
           {remainingPosts.length > 0 && (
             <section>
-              <h2 className="text-2xl font-bold text-foreground mb-8">All blog posts</h2>
+              <h2 className="text-2xl font-bold text-primary mb-8">All blog posts</h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                {remainingPosts.map((post) => (
+                {remainingPosts.map((post: any) => (
                   <BlogCard key={post.id} post={post} />
                 ))}
               </div>
 
               {/* Pagination */}
               <div className="flex items-center justify-between">
-                <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <button className="flex items-center gap-2 text-sm text-muted hover:text-primary transition-colors">
                   <ChevronLeft className="w-4 h-4" />
                   Previous
                 </button>
 
                 <div className="flex items-center gap-2">
-                  <button className="w-8 h-8 rounded flex items-center justify-center text-sm font-medium bg-primary text-primary-foreground">
+                  <button className="w-8 h-8 rounded flex items-center justify-center text-sm font-medium btn-primary">
                     1
                   </button>
                   {[2, 3, 4, 5, 6, 8, 10].map((page) => (
                     <button
                       key={page}
-                      className="w-8 h-8 rounded flex items-center justify-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      className="w-8 h-8 rounded flex items-center justify-center text-sm text-muted hover:text-primary transition-colors"
                     >
                       {page}
                     </button>
                   ))}
                 </div>
 
-                <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <button className="flex items-center gap-2 text-sm text-muted hover:text-primary transition-colors">
                   Next
                   <ChevronRight className="w-4 h-4" />
                 </button>

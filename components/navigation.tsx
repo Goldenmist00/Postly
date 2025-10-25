@@ -4,7 +4,7 @@ import { ThemeToggle } from "./theme-toggle";
 
 export default function Navigation() {
   return (
-    <nav className="border-b border-gray-200/50 dark:border-gray-700/50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-gray-900/60 shadow-lg">
+    <nav className="nav-modern sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-8">
@@ -15,19 +15,19 @@ export default function Navigation() {
             <div className="hidden md:flex items-center gap-6">
               <Link 
                 href="/" 
-                className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+                className="text-sm text-secondary hover:text-primary transition-colors font-medium hover:scale-105 transform duration-200"
               >
                 Home
               </Link>
               <Link 
                 href="/dashboard" 
-                className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+                className="text-sm text-secondary hover:text-primary transition-colors font-medium hover:scale-105 transform duration-200"
               >
                 Dashboard
               </Link>
               <Link 
                 href="/categories" 
-                className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+                className="text-sm text-secondary hover:text-primary transition-colors font-medium hover:scale-105 transform duration-200"
               >
                 Categories
               </Link>

@@ -106,7 +106,7 @@ export default function CategoriesPage() {
   return (
     <>
       <Navigation />
-      <main className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-blue-950">
+      <main className="page-bg">
         <div className="max-w-4xl mx-auto px-4 py-12 md:py-16">
           <Link 
             href="/dashboard" 

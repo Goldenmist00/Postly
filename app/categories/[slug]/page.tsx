@@ -75,7 +75,7 @@ export default function CategoryPage() {
   const { category, posts } = data;
 
   // Transform posts for component interface
-  const transformedPosts = posts.map(post => ({
+  const transformedPosts = posts.map((post: any) => ({
     id: post.id,
     title: post.title,
     description: post.content.substring(0, 150) + "...",
@@ -121,7 +121,7 @@ export default function CategoryPage() {
           {/* Posts Grid */}
           {transformedPosts.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {transformedPosts.map((post) => (
+              {transformedPosts.map((post: any) => (
                 <BlogCard key={post.id} post={post} />
               ))}
             </div>

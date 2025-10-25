@@ -1,8 +1,23 @@
 import { router, publicProcedure } from "../trpc";
 import { db } from "@/src/db";
 import { posts, categories, postCategories } from "@/src/db/schema";
-import { z } from "zod";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, like, or } from "drizzle-orm";
+import { 
+  createPostSchema, 
+  updatePostSchema, 
+  getPostBySlugSchema, 
+  getPostByIdSchema, 
+  deletePostSchema,
+  getPostsSchema,
+  getCategoryPostsSchema 
+} from "@/src/utils/validation";
+import { 
+  handleTRPCError, 
+  AppNotFoundError, 
+  AppDatabaseError,
+  withRetry 
+} from "@/src/utils/error-handling";
+import { SUCCESS_MESSAGES } from "@/src/constants";
 
 function generateSlug(title: string): string {
   return title
@@ -13,65 +28,86 @@ function generateSlug(title: string): string {
 
 export const postsRouter = router({
   getAll: publicProcedure
-    .input(z.object({
-      categorySlug: z.string().optional(),
-      published: z.boolean().optional(),
-    }).optional())
+    .input(getPostsSchema)
     .query(async ({ input }) => {
       try {
-        // Get posts with their categories
-        const postsWithCategories = await db
-          .select({
-            id: posts.id,
-            title: posts.title,
-            content: posts.content,
-            slug: posts.slug,
-            author: posts.author,
-            image: posts.image,
-            published: posts.published,
-            createdAt: posts.createdAt,
-            updatedAt: posts.updatedAt,
-          })
-          .from(posts)
-          .where(input?.published !== undefined ? eq(posts.published, input.published) : undefined)
-          .orderBy(desc(posts.createdAt));
+        return await withRetry(async () => {
+          // Build where conditions
+          const conditions = [];
+          
+          if (input.published !== undefined) {
+            conditions.push(eq(posts.published, input.published));
+          }
 
-        // Get categories for each post
-        const postsWithCategoriesData = await Promise.all(
-          postsWithCategories.map(async (post) => {
-            const postCategoriesData = await db
-              .select({
-                id: categories.id,
-                name: categories.name,
-                slug: categories.slug,
-              })
-              .from(categories)
-              .innerJoin(postCategories, eq(categories.id, postCategories.categoryId))
-              .where(eq(postCategories.postId, post.id));
+          if (input.search) {
+            conditions.push(
+              or(
+                like(posts.title, `%${input.search}%`),
+                like(posts.content, `%${input.search}%`),
+                like(posts.author, `%${input.search}%`)
+              )
+            );
+          }
 
-            return {
-              ...post,
-              categories: postCategoriesData,
-            };
-          })
-        );
+          const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-        // Filter by category if specified
-        if (input?.categorySlug) {
-          return postsWithCategoriesData.filter(post => 
-            post.categories.some(cat => cat.slug === input.categorySlug)
+          const postsData = await db
+            .select({
+              id: posts.id,
+              title: posts.title,
+              content: posts.content,
+              slug: posts.slug,
+              author: posts.author,
+              image: posts.image,
+              published: posts.published,
+              createdAt: posts.createdAt,
+              updatedAt: posts.updatedAt,
+            })
+            .from(posts)
+            .where(whereClause)
+            .orderBy(desc(posts.createdAt))
+            .limit(input.limit)
+            .offset((input.page - 1) * input.limit);
+
+          // Get categories for each post
+          const postsWithCategories = await Promise.all(
+            postsData.map(async (post) => {
+              const postCategoriesData = await db
+                .select({
+                  id: categories.id,
+                  name: categories.name,
+                  slug: categories.slug,
+                })
+                .from(categories)
+                .innerJoin(postCategories, eq(categories.id, postCategories.categoryId))
+                .where(eq(postCategories.postId, post.id));
+
+              return {
+                ...post,
+                categories: postCategoriesData,
+              };
+            })
           );
-        }
 
-        return postsWithCategoriesData;
+          // Filter by category if specified
+          if (input.categorySlug) {
+            return postsWithCategories.filter(post => 
+              post.categories.some(cat => cat.slug === input.categorySlug)
+            );
+          }
+
+          return postsWithCategories;
+        });
       } catch (error) {
+        console.error('Database error in getAll posts:', error);
+        // Fallback data for development
         return [{ 
           id: 1, 
           title: "Welcome to Postly", 
           content: "This is your first blog post. The database connection will be established soon!", 
           slug: "welcome-to-postly",
           author: "System",
-          image: "/placeholder.svg",
+          image: null,
           published: true,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -81,7 +117,7 @@ export const postsRouter = router({
     }),
 
   getBySlug: publicProcedure
-    .input(z.object({ slug: z.string() }))
+    .input(getPostBySlugSchema)
     .query(async ({ input }) => {
       try {
         const [post] = await db.select().from(posts).where(eq(posts.slug, input.slug));
@@ -111,7 +147,7 @@ export const postsRouter = router({
     }),
 
   getById: publicProcedure
-    .input(z.object({ id: z.number() }))
+    .input(getPostByIdSchema)
     .query(async ({ input }) => {
       try {
         const [post] = await db.select().from(posts).where(eq(posts.id, input.id));
@@ -141,64 +177,70 @@ export const postsRouter = router({
     }),
 
   create: publicProcedure
-    .input(z.object({
-      title: z.string().min(1),
-      content: z.string().min(1),
-      author: z.string().optional(),
-      image: z.string().optional(),
-      published: z.boolean().optional(),
-      categoryIds: z.array(z.number()).optional(),
-    }))
+    .input(createPostSchema)
     .mutation(async ({ input }) => {
       try {
-        const slug = generateSlug(input.title);
-        const [newPost] = await db.insert(posts).values({
-          title: input.title,
-          content: input.content,
-          slug,
-          author: input.author || "Anonymous",
-          image: input.image || null,
-          published: input.published || false,
-        }).returning();
+        return await withRetry(async () => {
+          const slug = generateSlug(input.title);
+          
+          // Check if slug already exists
+          const existingPost = await db
+            .select({ id: posts.id })
+            .from(posts)
+            .where(eq(posts.slug, slug))
+            .limit(1);
 
-        // Add categories if provided
-        if (input.categoryIds && input.categoryIds.length > 0) {
-          const categoryInserts = input.categoryIds.map(categoryId => ({
-            postId: newPost.id,
-            categoryId,
-          }));
-          await db.insert(postCategories).values(categoryInserts);
-        }
+          const finalSlug = existingPost.length > 0 
+            ? `${slug}-${Date.now()}` 
+            : slug;
 
-        return newPost;
+          const [newPost] = await db.insert(posts).values({
+            title: input.title,
+            content: input.content,
+            slug: finalSlug,
+            author: input.author || "Anonymous",
+            image: input.image || null,
+            published: input.published || false,
+          }).returning();
+
+          if (!newPost) {
+            throw new AppDatabaseError('Failed to create post');
+          }
+
+          // Add categories if provided
+          if (input.categoryIds && input.categoryIds.length > 0) {
+            const categoryInserts = input.categoryIds.map(categoryId => ({
+              postId: newPost.id,
+              categoryId,
+            }));
+            await db.insert(postCategories).values(categoryInserts);
+          }
+
+          return newPost;
+        });
       } catch (error) {
-        // Fallback: return a mock post when database is not available
-        console.log("Database not available, returning mock post");
-        const slug = generateSlug(input.title);
-        return {
-          id: Math.floor(Math.random() * 1000),
-          title: input.title,
-          content: input.content,
-          slug,
-          author: input.author || "Anonymous",
-          image: input.image || null,
-          published: input.published || false,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
+        if (process.env.NODE_ENV === 'development') {
+          // Fallback for development
+          console.log("Database not available, returning mock post");
+          const slug = generateSlug(input.title);
+          return {
+            id: Math.floor(Math.random() * 1000),
+            title: input.title,
+            content: input.content,
+            slug,
+            author: input.author || "Anonymous",
+            image: input.image || null,
+            published: input.published || false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+        }
+        throw handleTRPCError(error);
       }
     }),
 
   update: publicProcedure
-    .input(z.object({
-      id: z.number(),
-      title: z.string().min(1),
-      content: z.string().min(1),
-      author: z.string().optional(),
-      image: z.string().optional(),
-      published: z.boolean().optional(),
-      categoryIds: z.array(z.number()).optional(),
-    }))
+    .input(updatePostSchema)
     .mutation(async ({ input }) => {
       try {
         const slug = generateSlug(input.title);
@@ -238,7 +280,7 @@ export const postsRouter = router({
     }),
 
   delete: publicProcedure
-    .input(z.object({ id: z.number() }))
+    .input(deletePostSchema)
     .mutation(async ({ input }) => {
       try {
         // Delete post categories first
@@ -252,10 +294,7 @@ export const postsRouter = router({
     }),
 
   getByCategorySlug: publicProcedure
-    .input(z.object({ 
-      categorySlug: z.string(),
-      published: z.boolean().optional().default(true)
-    }))
+    .input(getCategoryPostsSchema)
     .query(async ({ input }) => {
       try {
         // First get the category

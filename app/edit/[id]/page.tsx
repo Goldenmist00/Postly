@@ -42,7 +42,7 @@ export default function EditPostPage() {
       setAuthor(post.author || "");
       setImage(post.image || "");
       setPublished(post.published || false);
-      setSelectedCategories(post.categories?.map(c => c.id) || []);
+      setSelectedCategories(post.categories?.map((c: any) => c.id) || []);
     }
   }, [post]);
 
@@ -198,7 +198,7 @@ export default function EditPostPage() {
         </div>
       </div>
 
-      <main className="min-h-screen bg-gray-50">
+      <main className="page-bg-alt">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-6">
             
@@ -213,7 +213,7 @@ export default function EditPostPage() {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="Post title"
-                    className="w-full text-3xl font-bold text-gray-900 placeholder-gray-400 border-none outline-none resize-none"
+                    className="w-full text-3xl font-bold text-primary placeholder-gray-400 dark:placeholder-slate-500 border-none outline-none resize-none bg-transparent"
                     style={{ fontFamily: 'inherit' }}
                   />
                 </div>

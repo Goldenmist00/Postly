@@ -249,7 +249,7 @@ export default function CreatePostPage() {
               <button
                 type="button"
                 onClick={() => setShowPreview(true)}
-                className="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-2"
+                className="btn-secondary flex items-center gap-2"
               >
                 <Eye className="w-4 h-4" />
                 Preview
@@ -258,7 +258,7 @@ export default function CreatePostPage() {
               <button
                 onClick={handleSubmit}
                 disabled={createPost.isPending || !title.trim() || !content.trim()}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="btn-gradient flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Save className="w-4 h-4" />
                 {createPost.isPending ? "Publishing..." : published ? "Publish" : "Save Draft"}
@@ -268,7 +268,7 @@ export default function CreatePostPage() {
         </div>
       </div>
 
-      <main className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-blue-950">
+      <main className="page-bg-alt">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-6">
             
@@ -283,7 +283,7 @@ export default function CreatePostPage() {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="Post title"
-                    className="w-full text-3xl font-bold text-gray-900 placeholder-gray-400 border-none outline-none resize-none"
+                    className="w-full text-3xl font-bold text-primary placeholder-gray-400 dark:placeholder-slate-500 border-none outline-none resize-none bg-transparent"
                     style={{ fontFamily: 'inherit' }}
                   />
                 </div>
@@ -364,8 +364,8 @@ export default function CreatePostPage() {
             <div className="lg:col-span-1 space-y-6">
               
               {/* Publish Settings */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                <h3 className="font-semibold text-gray-900 mb-4">Publish</h3>
+              <div className="card-modern p-6">
+                <h3 className="font-semibold text-primary mb-4">Publish</h3>
                 
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
@@ -388,20 +388,20 @@ export default function CreatePostPage() {
               </div>
 
               {/* Author */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                <h3 className="font-semibold text-gray-900 mb-4">Author</h3>
+              <div className="card-modern p-6">
+                <h3 className="font-semibold text-primary mb-4">Author</h3>
                 <input
                   type="text"
                   value={author}
                   onChange={(e) => setAuthor(e.target.value)}
                   placeholder="Author name"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  className="input-modern w-full text-sm"
                 />
               </div>
 
               {/* Featured Image */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <div className="card-modern p-6">
+                <h3 className="font-semibold text-primary mb-4 flex items-center gap-2">
                   <ImageIcon className="w-4 h-4" />
                   Featured Image <span className="text-sm font-normal text-gray-500">(optional)</span>
                 </h3>
@@ -410,7 +410,7 @@ export default function CreatePostPage() {
                   value={image}
                   onChange={(e) => setImage(e.target.value)}
                   placeholder="Image URL (optional)"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  className="input-modern w-full text-sm"
                 />
                 <div className="text-xs text-gray-500 mt-2">
                   Add a cover image to make your post stand out (optional)
@@ -418,8 +418,8 @@ export default function CreatePostPage() {
               </div>
 
               {/* Post Statistics */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+              <div className="card-modern p-6">
+                <h3 className="font-semibold text-primary mb-4 flex items-center gap-2">
                   <FileText className="w-4 h-4" />
                   Post Statistics
                 </h3>
@@ -453,8 +453,8 @@ export default function CreatePostPage() {
 
               {/* Categories */}
               {categories && categories.length > 0 && (
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                  <h3 className="font-semibold text-gray-900 mb-4">Categories</h3>
+                <div className="card-modern p-6">
+                  <h3 className="font-semibold text-primary mb-4">Categories</h3>
                   
                   <div className="space-y-2 max-h-48 overflow-y-auto">
                     {categories.map((category) => (
