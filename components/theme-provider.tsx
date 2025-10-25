@@ -16,7 +16,7 @@ type ThemeProviderState = {
 };
 
 const initialState: ThemeProviderState = {
-  theme: "system",
+  theme: "light",
   setTheme: () => null,
 };
 
@@ -24,7 +24,7 @@ const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
 export function ThemeProvider({
   children,
-  defaultTheme = "system",
+  defaultTheme = "light",
   storageKey = "postly-theme",
   ...props
 }: ThemeProviderProps) {
@@ -35,8 +35,11 @@ export function ThemeProvider({
     const storedTheme = localStorage?.getItem(storageKey) as Theme;
     if (storedTheme) {
       setTheme(storedTheme);
+    } else {
+      // If no stored theme, ensure we start with light mode
+      setTheme(defaultTheme);
     }
-  }, [storageKey]);
+  }, [storageKey, defaultTheme]);
 
   useEffect(() => {
     const root = window.document.documentElement;
