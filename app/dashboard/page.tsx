@@ -43,41 +43,42 @@ export default function DashboardPage() {
     <>
       <Navigation />
       <main className="page-bg">
-        <div className="max-w-7xl mx-auto px-4 py-12 md:py-16">
-          <div className="flex items-center justify-between mb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 lg:py-16">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-primary">Dashboard</h1>
-              <p className="text-secondary">Manage your blog posts</p>
+              <h1 className="text-2xl md:text-3xl font-bold text-primary">Dashboard</h1>
+              <p className="text-secondary text-sm md:text-base">Manage your blog posts</p>
             </div>
             <Link 
               href="/posts/create"
-              className="btn-gradient inline-flex items-center gap-2 hover-glow"
+              className="btn-gradient inline-flex items-center justify-center gap-2 hover-glow w-full sm:w-auto"
             >
               <Plus className="w-4 h-4" />
-              Create Post
+              <span className="sm:hidden">Create New Post</span>
+              <span className="hidden sm:inline">Create Post</span>
             </Link>
           </div>
 
           {/* Statistics Cards */}
           {posts && posts.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="card-modern p-6 text-center">
-                <div className="text-2xl font-bold text-primary mb-1">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mb-8">
+              <div className="card-modern p-4 md:p-6 text-center">
+                <div className="text-xl md:text-2xl font-bold text-primary mb-1">
                   {posts.length}
                 </div>
-                <div className="text-sm text-secondary">Total Posts</div>
+                <div className="text-xs md:text-sm text-secondary">Total Posts</div>
               </div>
-              <div className="card-modern p-6 text-center">
-                <div className="text-2xl font-bold text-green-600 mb-1">
+              <div className="card-modern p-4 md:p-6 text-center">
+                <div className="text-xl md:text-2xl font-bold text-green-600 mb-1">
                   {posts.filter((post: any) => post.published).length}
                 </div>
-                <div className="text-sm text-secondary">Published</div>
+                <div className="text-xs md:text-sm text-secondary">Published</div>
               </div>
-              <div className="card-modern p-6 text-center">
-                <div className="text-2xl font-bold text-yellow-600 mb-1">
+              <div className="card-modern p-4 md:p-6 text-center">
+                <div className="text-xl md:text-2xl font-bold text-yellow-600 mb-1">
                   {posts.filter((post: any) => !post.published).length}
                 </div>
-                <div className="text-sm text-secondary">Drafts</div>
+                <div className="text-xs md:text-sm text-secondary">Drafts</div>
               </div>
             </div>
           )}

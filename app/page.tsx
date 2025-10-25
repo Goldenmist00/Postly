@@ -59,7 +59,7 @@ export default function BlogPage() {
       <>
         <Navigation />
         <main className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-blue-950">
-          <div className="max-w-7xl mx-auto px-4 py-12 md:py-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 lg:py-16">
             {/* Search and Filter Skeleton */}
             <div className="mb-8 space-y-4">
               <div className="relative max-w-md">
@@ -198,16 +198,16 @@ export default function BlogPage() {
             </h2>
 
             {transformedPosts.length > 0 ? (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
                 {/* Featured large post */}
-                <div className="lg:col-span-1">
+                <div className="lg:col-span-1 order-1 lg:order-1">
                   {featuredPosts.map((post: any) => (
                     <FeaturedBlogCard key={post.id} post={post} />
                   ))}
                 </div>
 
                 {/* Small featured posts */}
-                <div className="lg:col-span-2 flex flex-col gap-6">
+                <div className="lg:col-span-2 order-2 lg:order-2 flex flex-col gap-4 md:gap-6">
                   {smallFeaturedPosts.map((post: any) => (
                     <SmallBlogCard key={post.id} post={post} />
                   ))}
@@ -225,7 +225,7 @@ export default function BlogPage() {
             <section>
               <h2 className="text-2xl font-bold text-primary mb-8">All blog posts</h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8">
                 {remainingPosts.map((post: any) => (
                   <BlogCard key={post.id} post={post} />
                 ))}

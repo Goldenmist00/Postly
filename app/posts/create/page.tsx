@@ -270,10 +270,10 @@ export default function CreatePostPage() {
 
       <main className="page-bg-alt min-h-screen writing-mode">
         <div className="writing-container">
-          <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 p-4 lg:p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 p-4 lg:p-6">
             
             {/* Main Editor */}
-            <div className="xl:col-span-4">
+            <div className="lg:col-span-3 xl:col-span-4 order-2 lg:order-1">
               <div className="card-modern overflow-hidden animate-in shadow-xl">
                 
                 {/* Title Input */}
@@ -372,7 +372,7 @@ export default function CreatePostPage() {
             </div>
 
             {/* Sidebar */}
-            <div className="xl:col-span-1 space-y-6">
+            <div className="lg:col-span-1 xl:col-span-1 order-1 lg:order-2 space-y-4 md:space-y-6">
               
               {/* Publish Settings */}
               <div className="card-modern p-6">

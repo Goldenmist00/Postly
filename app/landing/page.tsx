@@ -61,6 +61,12 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white">
+      
+      {/* EMERGENCY TEST SECTION - RIGHT AT THE TOP */}
+      <div className="w-full h-32 bg-red-500 flex items-center justify-center">
+        <h1 className="text-white text-4xl font-bold">🚨 LANDING PAGE IS WORKING! 🚨</h1>
+      </div>
+
       {/* Header */}
       <header className="border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 py-4">
@@ -268,6 +274,11 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* ANOTHER TEST SECTION RIGHT BEFORE FOOTER */}
+      <div className="w-full h-32 bg-green-500 flex items-center justify-center">
+        <h1 className="text-white text-4xl font-bold">✅ BEFORE FOOTER SECTION ✅</h1>
+      </div>
 
       {/* Footer */}
       <footer className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 border-t border-gray-200/50 dark:border-gray-700/50 py-12">

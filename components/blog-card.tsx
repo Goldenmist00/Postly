@@ -25,9 +25,9 @@ export default function BlogCard({ post }: { post: Post }) {
   const href = `/posts/${post.slug || post.id}`;
   
   return (
-    <div className="card-modern hover-lift animate-in group cursor-pointer hover-glow">
+    <div className="card-modern hover-lift animate-in group cursor-pointer hover-glow w-full">
       <Link href={href} className="block">
-        <div className="relative h-48 rounded-t-xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800">
+        <div className="relative h-40 sm:h-48 rounded-t-xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800">
           {isValidImageUrl(post.image) ? (
             <Image
               src={post.image}
@@ -49,22 +49,22 @@ export default function BlogCard({ post }: { post: Post }) {
           )}
         </div>
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <div className="flex items-start justify-between gap-2 mb-3">
-        <div>
-          <p className="text-xs text-muted-foreground">{post.author}</p>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-muted-foreground truncate">{post.author}</p>
           <p className="text-xs text-muted-foreground">{post.date}</p>
           {post.content && (
             <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-              <Clock className="w-3 h-3" />
-              <span>{formatReadingTime(calculateReadingTime(post.content))}</span>
+              <Clock className="w-3 h-3 flex-shrink-0" />
+              <span className="truncate">{formatReadingTime(calculateReadingTime(post.content))}</span>
             </div>
           )}
         </div>
         <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform flex-shrink-0" />
       </div>
 
-          <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2 group-hover:gradient-text transition-all duration-200 line-clamp-2">
+          <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 mb-2 group-hover:gradient-text transition-all duration-200 line-clamp-2 leading-tight">
             {post.title}
           </h3>
 
