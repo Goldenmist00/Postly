@@ -17,23 +17,45 @@ export default function LandingPage() {
   console.log("Landing page - Is loading:", isLoading);
   console.log("Landing page - Error:", error);
 
-  // Transform posts to match BlogCard interface
-  const transformedPosts = posts?.slice(0, 6).map((post: any) => ({
-    id: post.id,
-    title: post.title,
-    description: post.content.substring(0, 150) + "...",
-    author: post.author || "Anonymous",
-    date: new Date(post.createdAt).toLocaleDateString('en-US', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
-    }),
-    image: post.image || "/placeholder.svg",
-    tags: [], // Legacy field, now using categories
-    slug: post.slug,
-    content: post.content,
-    categories: post.categories || [],
-  })) || [];
+  // Transform posts to match BlogCard interface with error handling
+  const transformedPosts = posts?.slice(0, 6).map((post: any) => {
+    try {
+      return {
+        id: post.id,
+        title: post.title || "Untitled Post",
+        description: (post.content || "").substring(0, 150) + "...",
+        author: post.author || "Anonymous",
+        date: new Date(post.createdAt).toLocaleDateString('en-US', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric'
+        }),
+        image: post.image || "/placeholder.svg",
+        tags: [], // Legacy field, now using categories
+        slug: post.slug || `post-${post.id}`,
+        content: post.content || "",
+        categories: post.categories || [],
+      };
+    } catch (err) {
+      console.error("Error transforming post:", err, post);
+      return {
+        id: post.id || Math.random(),
+        title: "Error loading post",
+        description: "There was an error loading this post.",
+        author: "System",
+        date: new Date().toLocaleDateString('en-US', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric'
+        }),
+        image: "/placeholder.svg",
+        tags: [],
+        slug: `error-${post.id}`,
+        content: "",
+        categories: [],
+      };
+    }
+  }) || [];
 
   console.log("Landing page - Transformed posts:", transformedPosts);
 
@@ -175,7 +197,16 @@ export default function LandingPage() {
           </div>
 
           {/* Always render something to make section visible */}
-          <div className="min-h-[400px]">
+          <div className="min-h-[400px] bg-white dark:bg-gray-800 rounded-lg p-8">
+            <div className="text-center mb-8">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                Latest Posts
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                {isLoading ? "Loading posts..." : error ? "Error loading posts" : `${transformedPosts.length} posts found`}
+              </p>
+            </div>
+
             {error ? (
               <div className="text-center py-12 bg-red-50 dark:bg-red-900/20 rounded-lg">
                 <p className="text-red-600 dark:text-red-400 mb-4">
@@ -189,16 +220,40 @@ export default function LandingPage() {
                 </button>
               </div>
             ) : isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {[...Array(6)].map((_, i) => (
                   <PostCardSkeleton key={i} />
                 ))}
               </div>
             ) : transformedPosts.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-                {transformedPosts.map((post: any) => (
-                  <BlogCard key={post.id} post={post} />
-                ))}
+              <div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+                  {transformedPosts.map((post: any, index: number) => {
+                    try {
+                      return <BlogCard key={post.id} post={post} />;
+                    } catch (err) {
+                      console.error("Error rendering BlogCard:", err, post);
+                      return (
+                        <div key={post.id || index} className="card-modern p-6">
+                          <h3 className="font-bold text-red-600">Error rendering post</h3>
+                          <p className="text-sm text-gray-500">Post ID: {post.id}</p>
+                          <p className="text-sm text-gray-500">Title: {post.title}</p>
+                        </div>
+                      );
+                    }
+                  })}
+                </div>
+                
+                {/* View All Posts Button */}
+                <div className="text-center">
+                  <Link 
+                    href="/"
+                    className="btn-gradient inline-flex items-center gap-2 hover-glow"
+                  >
+                    View All Posts
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
               </div>
             ) : (
               <div className="text-center py-12 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
@@ -216,46 +271,7 @@ export default function LandingPage() {
             )}
           </div>
 
-          {/* Show pagination and call-to-action only if there are posts */}
-          {transformedPosts.length > 0 && (
-            <>
-              {/* Pagination - only show if more than 6 posts */}
-              {posts && posts.length > 6 && (
-                <div className="flex items-center justify-center gap-2 mb-12">
-                  <button className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-                    ← Previous
-                  </button>
-                  
-                  <div className="flex items-center gap-1">
-                    <button className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium bg-blue-600 text-white">
-                      1
-                    </button>
-                    <button className="w-8 h-8 rounded-lg flex items-center justify-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                      2
-                    </button>
-                    <button className="w-8 h-8 rounded-lg flex items-center justify-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                      3
-                    </button>
-                  </div>
 
-                  <button className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-                    Next →
-                  </button>
-                </div>
-              )}
-
-              {/* Call to Action */}
-              <div className="text-center mt-12">
-                <Link 
-                  href="/"
-                  className="btn-gradient inline-flex items-center gap-2 hover-glow"
-                >
-                  View All Posts
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </div>
-            </>
-          )}
         </div>
       </section>
 
